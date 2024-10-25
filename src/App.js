@@ -11,25 +11,21 @@ import {
 import { nanoid } from "nanoid";
 import { useSyncDemo } from "@tldraw/sync";
 import "tldraw/tldraw.css";
-import "./App.css"; // Import the CSS file
+import "./App.css";
 import { useState } from "react";
-
-// Step 2: Custom ShapeUtil Class for the LikeShape
 import { HTMLContainer, ShapeUtil } from "tldraw";
 
 class LikeShapeUtil extends ShapeUtil {
-  static type = "like"; // Define a unique type for this custom shape
+  static type = "like";
 
-  // Default properties for the shape
   getDefaultProps() {
     return {
-      w: 100,
+      w: 50,
       h: 50,
-      text: "👍", // Add the text property with emoji
+      text: "👍",
     };
   }
 
-  // Geometry for the shape (rectangle dimensions)
   getGeometry(shape) {
     return {
       width: shape.props.w,
@@ -46,7 +42,7 @@ class LikeShapeUtil extends ShapeUtil {
           style={{
             width: shape.props.w,
             height: shape.props.h,
-            backgroundColor: "lightblue",
+            backgroundColor: "blue",
             display: "flex",
             justifyContent: "center",
             alignItems: "center",
@@ -55,13 +51,12 @@ class LikeShapeUtil extends ShapeUtil {
             borderRadius: "8px",
           }}
         >
-          {shape.props.text} {/* Display the "👍" emoji */}
+          {shape.props.text}
         </div>
       </HTMLContainer>
     );
   }
 
-  // Indicator for the shape when selected (outline)
   indicator(shape) {
     return <rect width={shape.props.w} height={shape.props.h} />;
   }
@@ -69,12 +64,12 @@ class LikeShapeUtil extends ShapeUtil {
 
 // Custom Context Menu
 function CustomContextMenu(props) {
-  const editor = useEditor(); // Access the editor instance
+  const editor = useEditor();
   const [selectedShape, setSelectedShape] = useState(null);
 
   // Function to handle right-click (context menu) and ensure selection
   const handleContextMenu = (event) => {
-    event.preventDefault(); // Prevent the default context menu
+    event.preventDefault();
     console.log("Right-click event triggered.");
 
     const point = editor.screenToPage({ x: event.clientX, y: event.clientY });
@@ -84,37 +79,56 @@ function CustomContextMenu(props) {
 
     if (shape) {
       console.log("Shape found and selected:", shape.id);
-      setSelectedShape(shape.id);
+      setSelectedShape(shape);
       editor.select(shape.id);
     } else {
+      setSelectedShape(null);
       console.log("No shape found at the clicked point.");
     }
   };
 
   const handleLikeClick = () => {
-    const clickPoint = editor.inputs.currentPagePoint; // Get the current click point on the canvas
+    if (!selectedShape) return;
 
-    // Create the custom "Like" shape with a rectangle and emoji inside
-    editor.createShapes([
-      {
-        id: `shape:${nanoid()}`, // Generate a unique ID starting with "shape:"
-        type: "geo", // Use the custom shape type
-        x: clickPoint.x,
-        y: clickPoint.y,
-        props: {
-          geo: "cloud",
-          w: 50, // Width of the rectangle
-          h: 50, // Height of the rectangle
-          text: "👍", // Emoji inside the rectangle
-          size: "s",
-          color: "light-blue",
-          fill: "solid",
-          // color: "black",
-          labelColor: "black",
-          verticalAlign: "middle",
+    const shape = editor.getShape(selectedShape.id);
+    const { x = 0, y = 0, props = {}, rotation = 0 } = shape;
+
+    // Ensure width and height are numbers
+    const width = typeof props.w === "number" ? props.w : 50;
+    const radians = (rotation * Math.PI) / 180;
+
+    const topRightX = x + width - 10;
+    const topRightY = y - 10;
+    // const topRightX = x + width * Math.cos(radians);
+    // const topRightY = y - width * Math.sin(radians);
+
+    if (!isNaN(topRightX) && !isNaN(topRightY)) {
+      // Create the "Like" shape only if x and y are valid
+      editor.createShapes([
+        {
+          id: `shape:${nanoid()}`,
+          type: "geo",
+          x: topRightX,
+          y: topRightY,
+          props: {
+            geo: "rectangle",
+            w: 50,
+            h: 50,
+            text: "👍",
+            color: "blue",
+            size: "s",
+            fill: "solid",
+            verticalAlign: "middle",
+          },
         },
-      },
-    ]);
+      ]);
+    } else {
+      console.error(
+        "Invalid coordinates for Like shape:",
+        topRightX,
+        topRightY
+      );
+    }
   };
 
   return (
