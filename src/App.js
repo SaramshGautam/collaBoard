@@ -42,14 +42,21 @@ class LikeShapeUtil extends ShapeUtil {
           style={{
             width: shape.props.w,
             height: shape.props.h,
-            backgroundColor: "blue",
+            background: "linear-gradient(135deg, #e66465, #9198e5)", // Gradient background
+            boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.2)", // Drop shadow
             display: "flex",
             justifyContent: "center",
             alignItems: "center",
-            fontSize: "24px",
-            border: "1px solid black",
-            borderRadius: "8px",
+            fontSize: "28px", // Larger font size
+            fontWeight: "bold",
+            color: "#fff", // Text color for contrast
+            borderRadius: "50%", // Circular shape
+            border: "2px solid #333", // Border to define shape
+            padding: "8px", // Padding for better spacing
+            transition: "transform 0.2s, background 0.2s", // Smooth transition
           }}
+          onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.1)")} // Hover effect
+          onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
         >
           {shape.props.text}
         </div>
