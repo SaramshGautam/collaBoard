@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   DefaultContextMenu,
   TldrawUiMenuItem,
@@ -11,6 +11,13 @@ import { nanoid } from "nanoid";
 export default function CustomContextMenu(props) {
   const editor = useEditor();
   const [selectedShape, setSelectedShape] = useState(null);
+  const [showCommentBox, setShowCommentBox] = useState(false);
+  const [commentData, setCommentData] = useState({
+    userId: "User123", // Set your ID or fetch dynamically
+    timestamp: new Date().toLocaleString(),
+    text: "",
+  });
+  const commentInputRef = useRef(null);
 
   const handleContextMenu = (event) => {
     event.preventDefault();
@@ -55,10 +62,18 @@ export default function CustomContextMenu(props) {
 
   const handleCommentClick = () => {
     if (!selectedShape) return;
+    setShowCommentBox(true); // Show the comment input box
+  };
+
+  const handleCommentSubmit = (e) => {
+    e.preventDefault(); // Prevent default form submission behavior
+
+    if (!selectedShape) return;
 
     const shape = editor.getShape(selectedShape.id);
     const { x = 0, y = 0 } = shape;
 
+    // Top-left position for the comment icon
     const iconX = x - 15;
     const iconY = y - 15;
 
@@ -79,7 +94,24 @@ export default function CustomContextMenu(props) {
         },
       },
     ]);
+
+    setShowCommentBox(false); // Close the comment box
+    setCommentData({ ...commentData, text: "" }); // Clear the comment input
   };
+
+  const handleClear = () => {
+    setCommentData({ ...commentData, text: "" });
+  };
+  const handleClose = () => {
+    setShowCommentBox(false);
+    setCommentData({ ...commentData, text: "" }); // Clear the input fields when closed
+  };
+
+  useEffect(() => {
+    if (showCommentBox && commentInputRef.current) {
+      commentInputRef.current.focus();
+    }
+  }, [showCommentBox]);
 
   return (
     <div onContextMenu={handleContextMenu}>
@@ -120,6 +152,168 @@ export default function CustomContextMenu(props) {
         </TldrawUiMenuGroup>
         <DefaultContextMenuContent />
       </DefaultContextMenu>
+
+      {/* Comment Input Box */}
+      {showCommentBox && (
+        <div style={styles.commentBox}>
+          <button onClick={handleClose} style={styles.closeButton}>
+            ×
+          </button>
+
+          <h4 style={styles.commentBoxTitle}>Add Comment</h4>
+          <form onSubmit={handleCommentSubmit}>
+            <label style={styles.label}>
+              User ID:
+              <input
+                type="text"
+                value={commentData.userId}
+                onChange={(e) =>
+                  setCommentData({ ...commentData, userId: e.target.value })
+                }
+                style={styles.input}
+              />
+            </label>
+            <label style={styles.label}>
+              Time:
+              <input
+                type="text"
+                value={commentData.timestamp}
+                readOnly
+                style={styles.input}
+              />
+            </label>
+            <label style={styles.label}>
+              Comment:
+              <textarea
+                ref={commentInputRef}
+                value={commentData.text}
+                onChange={(e) =>
+                  setCommentData({ ...commentData, text: e.target.value })
+                }
+                style={styles.textarea}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    handleCommentSubmit(e); // Submit on Enter
+                  }
+                }}
+              />
+            </label>
+            <button type="submit" style={styles.button}>
+              Submit
+            </button>
+            <button
+              type="button"
+              onClick={handleClear}
+              style={styles.clearButton}
+            >
+              Clear
+            </button>
+          </form>
+        </div>
+      )}
     </div>
   );
 }
+
+const styles = {
+  commentBox: {
+    position: "absolute",
+    top: "100px",
+    left: "100px",
+    backgroundColor: "#fff",
+    padding: "20px",
+    boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)", // Softer shadow
+    borderRadius: "10px",
+    zIndex: 1000,
+    width: "280px",
+    fontFamily: "Arial, sans-serif",
+    color: "#333",
+  },
+  closeButton: {
+    position: "absolute",
+    top: "8px",
+    right: "8px",
+    background: "transparent",
+    border: "none",
+    fontSize: "18px",
+    color: "#999",
+    cursor: "pointer",
+    fontWeight: "bold",
+    outline: "none",
+  },
+  commentBoxTitle: {
+    marginBottom: "10px",
+    fontSize: "18px",
+    fontWeight: "600",
+    color: "#444",
+    borderBottom: "1px solid #ddd",
+    paddingBottom: "5px",
+  },
+  label: {
+    display: "block",
+    marginBottom: "8px",
+    fontSize: "14px",
+    color: "#555",
+  },
+  input: {
+    width: "100%",
+    padding: "8px 10px",
+    marginBottom: "10px",
+    border: "1px solid #ccc",
+    borderRadius: "5px",
+    fontSize: "14px",
+    color: "#333",
+    outline: "none",
+    transition: "border-color 0.2s",
+  },
+  textarea: {
+    width: "100%",
+    padding: "8px 10px",
+    marginBottom: "15px",
+    height: "60px",
+    border: "1px solid #ccc",
+    borderRadius: "5px",
+    fontSize: "14px",
+    color: "#333",
+    resize: "none",
+    outline: "none",
+    transition: "border-color 0.2s",
+  },
+  button: {
+    width: "100%",
+    padding: "10px",
+    fontSize: "14px",
+    color: "#fff",
+    backgroundColor: "#4CAF50",
+    border: "none",
+    borderRadius: "5px",
+    cursor: "pointer",
+    transition: "background-color 0.2s",
+    marginBottom: "10px",
+  },
+  clearButton: {
+    width: "100%",
+    padding: "10px",
+    fontSize: "14px",
+    color: "#fff",
+    backgroundColor: "#d9534f",
+    border: "none",
+    borderRadius: "5px",
+    cursor: "pointer",
+    transition: "background-color 0.2s",
+  },
+};
+
+// Hover and focus states
+styles.input[":focus"] = styles.textarea[":focus"] = {
+  borderColor: "#66afe9",
+};
+styles.button[":hover"] = {
+  backgroundColor: "#45a049",
+};
+styles.clearButton[":hover"] = {
+  backgroundColor: "#c9302c",
+};
+styles.closeButton[":hover"] = {
+  color: "#333",
+};
