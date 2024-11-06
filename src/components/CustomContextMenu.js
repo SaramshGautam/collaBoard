@@ -7,17 +7,29 @@ import {
   useEditor,
 } from "tldraw";
 import { nanoid } from "nanoid";
+import "../App.css";
 
 export default function CustomContextMenu(props) {
   const editor = useEditor();
   const [selectedShape, setSelectedShape] = useState(null);
   const [showCommentBox, setShowCommentBox] = useState(false);
+  // const [showCommentsView, setShowCommentsView] = useState(false);
+  const [comments, setComments] = useState({});
+  const [actionHistory, setActionHistory] = useState([]);
+  const [isViewingHistory, setIsViewingHistory] = useState(true);
   const [commentData, setCommentData] = useState({
-    userId: "User123", // Set your ID or fetch dynamically
+    userId: "User123",
     timestamp: new Date().toLocaleString(),
     text: "",
   });
   const commentInputRef = useRef(null);
+
+  const logAction = (action) => {
+    setActionHistory((prevHistory) => [
+      ...prevHistory,
+      { ...action, timestamp: new Date().toLocaleString() },
+    ]);
+  };
 
   const handleContextMenu = (event) => {
     event.preventDefault();
@@ -27,8 +39,10 @@ export default function CustomContextMenu(props) {
     if (shape) {
       setSelectedShape(shape);
       editor.select(shape.id);
+      console.log("Shape ID:", shape.id);
     } else {
       setSelectedShape(null);
+      console.log("No shape found at this point.");
     }
   };
 
@@ -49,8 +63,8 @@ export default function CustomContextMenu(props) {
         y: topRightY,
         props: {
           geo: "rectangle",
-          w: 50,
-          h: 50,
+          w: 60,
+          h: 30,
           text: "👍",
           color: "blue",
           fill: "solid",
@@ -58,50 +72,38 @@ export default function CustomContextMenu(props) {
         },
       },
     ]);
+    logAction({ userId: commentData.userId, action: "liked a picture" });
   };
 
   const handleCommentClick = () => {
     if (!selectedShape) return;
-    setShowCommentBox(true); // Show the comment input box
+    setShowCommentBox(true);
   };
 
   const handleCommentSubmit = (e) => {
-    e.preventDefault(); // Prevent default form submission behavior
+    e.preventDefault();
 
     if (!selectedShape) return;
 
-    const shape = editor.getShape(selectedShape.id);
-    const { x = 0, y = 0 } = shape;
-
-    // Top-left position for the comment icon
-    const iconX = x - 15;
-    const iconY = y - 15;
-
-    editor.createShapes([
-      {
-        id: `shape:${nanoid()}`,
-        type: "geo",
-        x: iconX,
-        y: iconY,
-        props: {
-          geo: "rectangle",
-          w: 50,
-          h: 50,
-          text: "💬",
-          color: "black",
-          fill: "solid",
-          verticalAlign: "middle",
-        },
-      },
-    ]);
+    const shapeId = selectedShape.id;
+    setComments((prevComments) => ({
+      ...prevComments,
+      [shapeId]: [...(prevComments[shapeId] || []), commentData],
+    }));
 
     setShowCommentBox(false); // Close the comment box
     setCommentData({ ...commentData, text: "" }); // Clear the comment input
+
+    const shape = editor.getShape(shapeId);
+    const { x, y } = shape;
+    createCommentIcon(x - 15, y - 15, shapeId);
+    logAction({ userId: commentData.userId, action: "added a comment" });
   };
 
   const handleClear = () => {
     setCommentData({ ...commentData, text: "" });
   };
+
   const handleClose = () => {
     setShowCommentBox(false);
     setCommentData({ ...commentData, text: "" }); // Clear the input fields when closed
@@ -112,6 +114,33 @@ export default function CustomContextMenu(props) {
       commentInputRef.current.focus();
     }
   }, [showCommentBox]);
+
+  // const handleViewComments = (shapeId) => {
+  //   setSelectedShape(editor.getShape(shapeId));
+  //   setShowCommentsView(true);
+  // };
+
+  const createCommentIcon = (x, y, shapeId) => {
+    editor.createShapes([
+      {
+        // id: `shape:${shapeId}_${nanoid()}`, // Unique id for easy identification
+        id: `shape:${nanoid()}`, // Unique id for easy identification
+        // id: `shape:${shapeId}`, // Unique id for easy identification
+        type: "geo",
+        x: x,
+        y: y,
+        props: {
+          geo: "rectangle",
+          w: 60,
+          h: 20,
+          text: "💬",
+          color: "black",
+          fill: "solid",
+          verticalAlign: "middle",
+        },
+      },
+    ]);
+  };
 
   return (
     <div onContextMenu={handleContextMenu}>
@@ -152,6 +181,38 @@ export default function CustomContextMenu(props) {
         </TldrawUiMenuGroup>
         <DefaultContextMenuContent />
       </DefaultContextMenu>
+
+      {/* {selectedShape && <HistoryPanel actionHistory={actionHistory} />} */}
+      {selectedShape && (
+        <div style={styles.panelContainer}>
+          {/* Toggle Buttons */}
+          <div style={styles.toggleButtonContainer}>
+            <button
+              onClick={() => setIsViewingHistory(true)}
+              style={
+                isViewingHistory ? styles.activeButton : styles.toggleButton
+              }
+            >
+              Action History
+            </button>
+            <button
+              onClick={() => setIsViewingHistory(false)}
+              style={
+                !isViewingHistory ? styles.activeButton : styles.toggleButton
+              }
+            >
+              Comments
+            </button>
+          </div>
+
+          {/* Toggleable Panel Content */}
+          {isViewingHistory ? (
+            <HistoryPanel actionHistory={actionHistory} />
+          ) : (
+            <CommentPanel comments={comments[selectedShape.id] || []} />
+          )}
+        </div>
+      )}
 
       {/* Comment Input Box */}
       {showCommentBox && (
@@ -215,7 +276,75 @@ export default function CustomContextMenu(props) {
   );
 }
 
+function HistoryPanel({ actionHistory }) {
+  return (
+    <div style={styles.historyPanel}>
+      <h4 style={styles.historyTitle}>Action History</h4>
+      <ul style={styles.historyList}>
+        {actionHistory.map((action, index) => (
+          <li key={index} style={styles.historyItem}>
+            <strong>{action.userId}</strong> {action.action} at{" "}
+            {action.timestamp}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function CommentPanel({ comments }) {
+  return (
+    <div style={styles.commentsPanel}>
+      <h4 style={styles.commentsTitle}>Comments</h4>
+      <ul style={styles.commentsList}>
+        {comments.map((comment, index) => (
+          <li key={index} style={styles.commentItem}>
+            <strong>{comment.userId}:</strong> {comment.text}
+            <div style={styles.timestamp}>{comment.timestamp}</div>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 const styles = {
+  panelContainer: {
+    position: "absolute",
+    top: "10px",
+    right: "10px",
+    width: "250px",
+    backgroundColor: "#fff",
+    borderRadius: "10px",
+    boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
+    fontFamily: "Arial, sans-serif",
+    color: "#333",
+    padding: "10px",
+  },
+  toggleButtonContainer: {
+    display: "flex",
+    justifyContent: "space-between",
+    marginBottom: "10px",
+  },
+  toggleButton: {
+    flex: 1,
+    padding: "8px",
+    backgroundColor: "#f0f0f0",
+    border: "none",
+    cursor: "pointer",
+    borderRadius: "5px",
+    margin: "0 2px",
+  },
+  activeButton: {
+    flex: 1,
+    padding: "8px",
+    backgroundColor: "#007bff",
+    color: "#fff",
+    border: "none",
+    cursor: "pointer",
+    borderRadius: "5px",
+    margin: "0 2px",
+  },
   commentBox: {
     position: "absolute",
     top: "100px",
@@ -226,6 +355,19 @@ const styles = {
     borderRadius: "10px",
     zIndex: 1000,
     width: "280px",
+    fontFamily: "Arial, sans-serif",
+    color: "#333",
+  },
+  commentsViewBox: {
+    position: "absolute",
+    top: "150px",
+    left: "100px",
+    backgroundColor: "#fff",
+    padding: "20px",
+    boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
+    borderRadius: "10px",
+    zIndex: 1000,
+    width: "300px",
     fontFamily: "Arial, sans-serif",
     color: "#333",
   },
@@ -240,6 +382,27 @@ const styles = {
     cursor: "pointer",
     fontWeight: "bold",
     outline: "none",
+  },
+  commentsViewTitle: {
+    fontSize: "18px",
+    fontWeight: "600",
+    color: "#444",
+    marginBottom: "10px",
+  },
+  commentsList: {
+    listStyleType: "none",
+    padding: 0,
+    maxHeight: "200px",
+    overflowY: "auto",
+  },
+  commentItem: {
+    padding: "8px",
+    borderBottom: "1px solid #ddd",
+  },
+  timestamp: {
+    fontSize: "12px",
+    color: "#888",
+    marginTop: "5px",
   },
   commentBoxTitle: {
     marginBottom: "10px",
@@ -301,6 +464,31 @@ const styles = {
     borderRadius: "5px",
     cursor: "pointer",
     transition: "background-color 0.2s",
+  },
+
+  historyPanel: {
+    maxHeight: "300px",
+    overflowY: "auto",
+  },
+  commentsPanel: {
+    maxHeight: "300px",
+    overflowY: "auto",
+  },
+  historyList: {
+    listStyleType: "none",
+    padding: 0,
+  },
+  historyItem: {
+    fontSize: "14px",
+    marginBottom: "5px",
+  },
+  commentsList: {
+    listStyleType: "none",
+    padding: 0,
+  },
+  commentItem: {
+    fontSize: "14px",
+    marginBottom: "5px",
   },
 };
 
