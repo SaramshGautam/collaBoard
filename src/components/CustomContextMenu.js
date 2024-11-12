@@ -19,12 +19,17 @@ export default function CustomContextMenu(props) {
   const [comments, setComments] = useState({});
   const [actionHistory, setActionHistory] = useState([]);
   const [isViewingHistory, setIsViewingHistory] = useState(true);
+  const [isPanelCollapsed, setIsPanelCollapsed] = useState(false);
   const [commentData, setCommentData] = useState({
     userId: "User123",
     timestamp: new Date().toLocaleString(),
     text: "",
   });
   const commentInputRef = useRef(null);
+
+  const togglePanel = () => {
+    setIsPanelCollapsed(!isPanelCollapsed);
+  };
 
   const logAction = (action) => {
     setActionHistory((prevHistory) => [
@@ -177,19 +182,35 @@ export default function CustomContextMenu(props) {
         <DefaultContextMenuContent />
       </DefaultContextMenu>
 
-      {selectedShape && (
-        <div className="panelContainer">
-          <ToggleButtonGroup
-            isViewingHistory={isViewingHistory}
-            setIsViewingHistory={setIsViewingHistory}
-          />
-          {isViewingHistory ? (
-            <HistoryPanel actionHistory={actionHistory} />
-          ) : (
-            <CommentPanel comments={comments[selectedShape.id] || []} />
-          )}
-        </div>
-      )}
+      <div className="panelContainerWrapper">
+        {/* Collapsible Panel */}
+        {!isPanelCollapsed && (
+          <div className="panelContainer">
+            <button onClick={togglePanel} className="toggle-collapse-button">
+              {isPanelCollapsed ? "<<" : ">>"}
+            </button>
+            <ToggleButtonGroup
+              isViewingHistory={isViewingHistory}
+              setIsViewingHistory={setIsViewingHistory}
+            />
+            {isViewingHistory ? (
+              <HistoryPanel actionHistory={actionHistory} />
+            ) : (
+              <CommentPanel comments={comments[selectedShape?.id] || []} />
+            )}
+          </div>
+        )}
+
+        {/* Button to expand the panel if it's collapsed */}
+        {isPanelCollapsed && (
+          <div className="toggle-expand-container">
+            <button onClick={togglePanel} className="toggle-expand-button">
+              {"<<"}
+            </button>
+            <div className="panel-label">History/Comment Panel</div>
+          </div>
+        )}
+      </div>
 
       {/* Comment Input Box */}
       {showCommentBox && (

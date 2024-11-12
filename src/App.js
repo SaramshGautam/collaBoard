@@ -16,7 +16,7 @@ export default function App() {
   const store = useSyncDemo({ roomId: "collaBoard-abc123" });
 
   return (
-    <div style={{ position: "fixed", inset: 0 }}>
+    <div className="main-container" style={{ position: "fixed", inset: 0 }}>
       <Navbar />
       <Tldraw store={store} components={components} />
     </div>

@@ -1,9 +1,24 @@
-.navbar {
+/* .navbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 10px 20px;
   background-color: #14213d;
+} */
+
+.navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 60px; /* Adjust height as needed */
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: #14213d; /* Navbar background color */
+  padding: 0 20px;
+  color: white;
+  z-index: 1000; /* Ensure navbar stays on top */
 }
 
 .navbar-title {

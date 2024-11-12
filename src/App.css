@@ -1,6 +1,18 @@
-.panelContainer {
+.main-container {
+  margin-top: 60px;
+  position: relative;
+  height: calc(100vh - 60px);
+}
+
+.panelContainerWrapper {
   position: fixed;
-  /* top: 150px; */
+  right: 10px;
+  /* top: 10px; */
+  z-index: 1000;
+}
+
+.panelContainer {
+  /* position: fixed; */
   right: 10px;
   width: 250px;
   background-color: #fff;
@@ -8,7 +20,53 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   font-family: Arial, sans-serif;
   color: #333;
-  padding: 10px;
+  padding: 20px;
+}
+
+.toggle-collapse-button {
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  color: #ccc;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.toggle-expand-button {
+  right: 10px;
+  top: 10px;
+  color: #ccc;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 16px;
+  margin-left: 8px;
+  align-items: center;
+}
+
+.toggle-collapse-button:hover,
+.toggle-expand-button:hover {
+  /* background-color: #0056b3; */
+  color: #aaa;
+}
+
+.toggle-expand-container {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  width: max-content;
+  padding: 8px 12px;
+  background-color: #eee;
+  border-bottom-right-radius: 10px;
+  border-bottom-left-radius: 10px;
+  /* box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); */
+  gap: 8px;
+}
+.panel-label {
+  font-size: 12px;
+  color: #333333;
 }
 
 .toggleButtonContainer {
@@ -205,4 +263,12 @@
 
 .tlui-style-panel {
   position: fixed;
+}
+
+.tl-watermark_SEE-LICENSE {
+  position: relative;
+}
+
+.tlui-style-panel {
+  display: none;
 }
