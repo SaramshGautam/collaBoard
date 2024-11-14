@@ -1,4 +1,218 @@
-import React, { useState, useEffect, useRef } from "react";
+// import React, { useState } from "react";
+// import {
+//   DefaultContextMenu,
+//   TldrawUiMenuItem,
+//   TldrawUiMenuGroup,
+//   DefaultContextMenuContent,
+//   useEditor,
+// } from "tldraw";
+// import { nanoid } from "nanoid";
+// import "../App.css";
+// import HistoryCommentPanel from "./HistoryCommentPanel";
+// import ToggleExpandButton from "./ToggleExpandButton";
+// import CommentBox from "./CommentBox";
+// import CommentIconWithCounter from "./CommentIconWithCounter";
+
+// export default function CustomContextMenu(props) {
+//   const editor = useEditor();
+//   const [selectedShape, setSelectedShape] = useState(null);
+//   const [showCommentBox, setShowCommentBox] = useState(false);
+//   const [comments, setComments] = useState({});
+//   const [actionHistory, setActionHistory] = useState([]);
+//   const [isPanelCollapsed, setIsPanelCollapsed] = useState(false);
+
+//   const reactions = [
+//     { id: "like", label: "Like 👍", icon: "⏫" },
+//     { id: "dislike", label: "Dislike 👎", icon: "⏬" },
+//     { id: "confusion", label: "Confusion ❓", icon: "❓" },
+//     { id: "important", label: "Important ❗", icon: "❗" },
+//   ];
+
+//   const togglePanel = () => {
+//     setIsPanelCollapsed(!isPanelCollapsed);
+//   };
+
+//   const logAction = (action) => {
+//     setActionHistory((prevHistory) => [
+//       ...prevHistory,
+//       { ...action, timestamp: new Date().toLocaleString() },
+//     ]);
+//   };
+
+//   const handleContextMenu = (event) => {
+//     event.preventDefault();
+//     const point = editor.screenToPage({ x: event.clientX, y: event.clientY });
+//     const shape = editor.getShapeAtPoint(point);
+
+//     if (shape) {
+//       setSelectedShape(shape);
+//       editor.select(shape.id);
+//       console.log("Shape ID:", shape.id);
+//     } else {
+//       setSelectedShape(null);
+//       console.log("No shape found at this point.");
+//     }
+//   };
+
+//   const handleReactionClick = (reactionId) => {
+//     if (!selectedShape) return;
+
+//     const shape = editor.getShape(selectedShape.id);
+//     const { x = 0, y = 0, props = {} } = shape;
+
+//     const topRightX = x + (props.w || 50) - 30;
+//     const topRightY = y - 30;
+
+//     const reactionIcon =
+//       reactions.find((reaction) => reaction.id === reactionId)?.icon || "";
+
+//     editor.createShapes([
+//       {
+//         id: `shape:${nanoid()}`,
+//         type: "geo",
+//         x: topRightX,
+//         y: topRightY,
+//         props: {
+//           geo: "ellipse",
+//           w: 60,
+//           h: 30,
+//           text: reactionIcon,
+//           color: "blue",
+//           fill: "solid",
+//           verticalAlign: "middle",
+//         },
+//       },
+//     ]);
+//     logAction({ userId: "User123", action: `reacted with ${reactionId}` });
+//   };
+
+//   const handleCommentClick = () => {
+//     if (!selectedShape) return;
+//     setShowCommentBox(true);
+//   };
+
+//   const addComment = (shapeId, commentData) => {
+//     const commentDataWithTime = {
+//       ...commentData,
+//       timestamp: new Date().toLocaleString(),
+//     };
+
+//     setComments((prevComments) => ({
+//       ...prevComments,
+//       [shapeId]: [...(prevComments[shapeId] || []), commentDataWithTime],
+//     }));
+//   };
+
+//   const renderCommentIconWithCounter = (shapeId) => {
+//     const shapeComments = comments[shapeId] || [];
+//     if (shapeComments.length === 0) return null;
+
+//     const shape = editor.getShape(shapeId);
+//     if (!shape) return;
+
+//     const { x, y } = shape;
+
+//     return (
+//       <CommentIconWithCounter
+//         key={shapeId}
+//         count={shapeComments.length}
+//         x={x}
+//         y={y}
+//       />
+//     );
+//   };
+
+//   return (
+//     <div onContextMenu={handleContextMenu}>
+//       <DefaultContextMenu {...props}>
+//         <TldrawUiMenuGroup id="reactions">
+//           <div
+//             style={{
+//               backgroundColor: "lightblue",
+//               padding: "5px",
+//               fontWeight: "bold",
+//             }}
+//           >
+//             <TldrawUiMenuItem
+//               id="react"
+//               label="React 🙂"
+//               icon="code"
+//               readonlyOk
+//               onSelect={() => handleReactionClick()}
+//               className="menu-item-react"
+//             >
+//               {reactions.map((reaction) => (
+//                 <TldrawUiMenuItem
+//                   key={reaction.id}
+//                   id={reaction.id}
+//                   label={reaction.label}
+//                   icon={reaction.icon}
+//                   readonlyOk
+//                   onSelect={() => handleReactionClick(reaction.id)}
+//                 />
+//               ))}
+//             </TldrawUiMenuItem>
+//           </div>
+//         </TldrawUiMenuGroup>
+
+//         <TldrawUiMenuGroup id="example">
+//           <div
+//             style={{
+//               backgroundColor: "#f0f8ff",
+//               padding: "5px",
+//               fontWeight: "bold",
+//             }}
+//           >
+//             <TldrawUiMenuItem
+//               id="comment"
+//               label="Comment 💬"
+//               icon="code"
+//               readonlyOk
+//               onSelect={handleCommentClick}
+//               className="menu-item-comment"
+//             />
+//           </div>
+//         </TldrawUiMenuGroup>
+//         <DefaultContextMenuContent />
+//       </DefaultContextMenu>
+
+//       <div className="panelContainerWrapper">
+//         {!isPanelCollapsed && (
+//           <HistoryCommentPanel
+//             actionHistory={actionHistory}
+//             comments={comments}
+//             selectedShape={selectedShape}
+//             isPanelCollapsed={isPanelCollapsed}
+//             togglePanel={togglePanel}
+//           />
+//         )}
+
+//         {isPanelCollapsed && (
+//           <ToggleExpandButton
+//             isPanelCollapsed={isPanelCollapsed}
+//             togglePanel={togglePanel}
+//           />
+//         )}
+//       </div>
+
+//       <CommentBox
+//         selectedShape={selectedShape}
+//         addComment={addComment}
+//         showCommentBox={showCommentBox}
+//         onClose={() => setShowCommentBox(false)}
+//         logAction={logAction}
+//       />
+
+//       {Object.keys(comments).map((shapeId) => (
+//         <React.Fragment key={shapeId}>
+//           {renderCommentIconWithCounter(shapeId)}
+//         </React.Fragment>
+//       ))}
+//     </div>
+//   );
+// }
+
+import React, { useState } from "react";
 import {
   DefaultContextMenu,
   TldrawUiMenuItem,
@@ -8,9 +222,10 @@ import {
 } from "tldraw";
 import { nanoid } from "nanoid";
 import "../App.css";
-import HistoryPanel from "./HistoryPanel";
-import CommentPanel from "./CommentPanel";
-import ToggleButtonGroup from "./ToggleButtonGroup";
+import HistoryCommentPanel from "./HistoryCommentPanel";
+import ToggleExpandButton from "./ToggleExpandButton";
+import CommentBox from "./CommentBox";
+import CommentIconWithCounter from "./CommentIconWithCounter"; // Import the new component
 
 export default function CustomContextMenu(props) {
   const editor = useEditor();
@@ -18,14 +233,7 @@ export default function CustomContextMenu(props) {
   const [showCommentBox, setShowCommentBox] = useState(false);
   const [comments, setComments] = useState({});
   const [actionHistory, setActionHistory] = useState([]);
-  const [isViewingHistory, setIsViewingHistory] = useState(true);
   const [isPanelCollapsed, setIsPanelCollapsed] = useState(false);
-  const [commentData, setCommentData] = useState({
-    userId: "User123",
-    timestamp: new Date().toLocaleString(),
-    text: "",
-  });
-  const commentInputRef = useRef(null);
 
   const togglePanel = () => {
     setIsPanelCollapsed(!isPanelCollapsed);
@@ -59,8 +267,8 @@ export default function CustomContextMenu(props) {
     const shape = editor.getShape(selectedShape.id);
     const { x = 0, y = 0, props = {} } = shape;
 
-    const topRightX = x + (props.w || 50) - 20;
-    const topRightY = y - 20;
+    const topRightX = x + (props.w || 50) - 30;
+    const topRightY = y - 30;
 
     editor.createShapes([
       {
@@ -79,7 +287,7 @@ export default function CustomContextMenu(props) {
         },
       },
     ]);
-    logAction({ userId: commentData.userId, action: "liked a picture" });
+    logAction({ userId: "User123", action: "liked a picture" });
   };
 
   const handleCommentClick = () => {
@@ -87,59 +295,35 @@ export default function CustomContextMenu(props) {
     setShowCommentBox(true);
   };
 
-  const handleCommentSubmit = (e) => {
-    e.preventDefault();
+  const addComment = (shapeId, commentData) => {
+    const commentDataWithTime = {
+      ...commentData,
+      timestamp: new Date().toLocaleString(),
+    };
 
-    if (!selectedShape) return;
-
-    const shapeId = selectedShape.id;
     setComments((prevComments) => ({
       ...prevComments,
-      [shapeId]: [...(prevComments[shapeId] || []), commentData],
+      [shapeId]: [...(prevComments[shapeId] || []), commentDataWithTime],
     }));
+  };
 
-    setShowCommentBox(false);
-    setCommentData({ ...commentData, text: "" });
+  const renderCommentIconWithCounter = (shapeId) => {
+    const shapeComments = comments[shapeId] || [];
+    if (shapeComments.length === 0) return null;
 
     const shape = editor.getShape(shapeId);
+    if (!shape) return;
+
     const { x, y } = shape;
-    createCommentIcon(x - 15, y - 15, shapeId);
-    logAction({ userId: commentData.userId, action: "added a comment" });
-  };
 
-  const handleClear = () => {
-    setCommentData({ ...commentData, text: "" });
-  };
-
-  const handleClose = () => {
-    setShowCommentBox(false);
-    setCommentData({ ...commentData, text: "" });
-  };
-
-  useEffect(() => {
-    if (showCommentBox && commentInputRef.current) {
-      commentInputRef.current.focus();
-    }
-  }, [showCommentBox]);
-
-  const createCommentIcon = (x, y, shapeId) => {
-    editor.createShapes([
-      {
-        id: `shape:${nanoid()}`,
-        type: "geo",
-        x: x,
-        y: y,
-        props: {
-          geo: "ellipse",
-          w: 60,
-          h: 20,
-          text: "💬",
-          color: "black",
-          fill: "solid",
-          verticalAlign: "middle",
-        },
-      },
-    ]);
+    return (
+      <CommentIconWithCounter
+        key={shapeId}
+        count={shapeComments.length}
+        x={x}
+        y={y}
+      />
+    );
   };
 
   return (
@@ -183,89 +367,38 @@ export default function CustomContextMenu(props) {
       </DefaultContextMenu>
 
       <div className="panelContainerWrapper">
-        {/* Collapsible Panel */}
         {!isPanelCollapsed && (
-          <div className="panelContainer">
-            <button onClick={togglePanel} className="toggle-collapse-button">
-              {isPanelCollapsed ? "<<" : ">>"}
-            </button>
-            <ToggleButtonGroup
-              isViewingHistory={isViewingHistory}
-              setIsViewingHistory={setIsViewingHistory}
-            />
-            {isViewingHistory ? (
-              <HistoryPanel actionHistory={actionHistory} />
-            ) : (
-              <CommentPanel comments={comments[selectedShape?.id] || []} />
-            )}
-          </div>
+          <HistoryCommentPanel
+            actionHistory={actionHistory}
+            comments={comments}
+            selectedShape={selectedShape}
+            isPanelCollapsed={isPanelCollapsed}
+            togglePanel={togglePanel}
+          />
         )}
 
-        {/* Button to expand the panel if it's collapsed */}
         {isPanelCollapsed && (
-          <div className="toggle-expand-container">
-            <button onClick={togglePanel} className="toggle-expand-button">
-              {"<<"}
-            </button>
-            <div className="panel-label">History/Comment Panel</div>
-          </div>
+          <ToggleExpandButton
+            isPanelCollapsed={isPanelCollapsed}
+            togglePanel={togglePanel}
+          />
         )}
       </div>
 
       {/* Comment Input Box */}
-      {showCommentBox && (
-        <div className="commentBox">
-          <button onClick={handleClose} className="closeButton">
-            ×
-          </button>
+      <CommentBox
+        selectedShape={selectedShape}
+        addComment={addComment}
+        showCommentBox={showCommentBox}
+        onClose={() => setShowCommentBox(false)}
+        logAction={logAction}
+      />
 
-          <h4 className="commentBoxTitle">Add Comment</h4>
-          <form onSubmit={handleCommentSubmit}>
-            <label className="label">
-              User ID:
-              <input
-                type="text"
-                value={commentData.userId}
-                onChange={(e) =>
-                  setCommentData({ ...commentData, userId: e.target.value })
-                }
-                className="input"
-              />
-            </label>
-            <label className="label">
-              Time:
-              <input
-                type="text"
-                value={commentData.timestamp}
-                readOnly
-                className="input"
-              />
-            </label>
-            <label className="label">
-              Comment:
-              <textarea
-                ref={commentInputRef}
-                value={commentData.text}
-                onChange={(e) =>
-                  setCommentData({ ...commentData, text: e.target.value })
-                }
-                className="textarea"
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && !e.shiftKey) {
-                    handleCommentSubmit(e); // Submit on Enter
-                  }
-                }}
-              />
-            </label>
-            <button type="submit" className="button">
-              Submit
-            </button>
-            <button type="button" onClick={handleClear} className="clearButton">
-              Clear
-            </button>
-          </form>
-        </div>
-      )}
+      {Object.keys(comments).map((shapeId) => (
+        <React.Fragment key={shapeId}>
+          {renderCommentIconWithCounter(shapeId)}
+        </React.Fragment>
+      ))}
     </div>
   );
 }

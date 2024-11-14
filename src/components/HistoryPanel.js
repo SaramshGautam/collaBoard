@@ -8,8 +8,8 @@ export default function HistoryPanel({ actionHistory }) {
       <ul className="historyList">
         {actionHistory.map((action, index) => (
           <li key={index} className="historyItem">
-            <strong>{action.userId}</strong> {action.action} at{" "}
-            {action.timestamp}
+            <strong>{action.userId}</strong> {action.action}
+            <div className="timestamp">{action.timestamp}</div>
           </li>
         ))}
       </ul>
