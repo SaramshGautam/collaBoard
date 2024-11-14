@@ -72,6 +72,7 @@ export default function CustomContextMenu(props) {
         type: "geo",
         x: topRightX,
         y: topRightY,
+        isLocked: true,
         props: {
           geo: "ellipse",
           w: 60,
@@ -115,7 +116,7 @@ export default function CustomContextMenu(props) {
 
     return (
       <CommentIconWithCounter
-        key={shapeId}
+        shapeId={shapeId}
         count={shapeComments.length}
         x={x}
         y={y}
@@ -132,9 +133,9 @@ export default function CustomContextMenu(props) {
               backgroundColor: "lightblue",
               padding: "5px",
               fontWeight: "bold",
-              position: "relative", // Ensure submenu positions itself relative to this item
+              position: "relative",
             }}
-            className="menu-item-react" // CSS class for hover effect
+            className="menu-item-react"
           >
             <TldrawUiMenuItem
               id="react"

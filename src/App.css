@@ -306,14 +306,15 @@
 }
 
 .tlui-style-panel {
-  display: none;
+  position: relative;
+  top: 72%;
 }
 
 /* App.css */
 .submenu {
   position: relative;
   display: none; /* Hidden by default */
-  background-color: white;
+  background-color: #aaa;
   border: 1px solid #f4ee9b;
   padding: 0px;
   z-index: 10;
