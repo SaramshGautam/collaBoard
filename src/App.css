@@ -308,3 +308,26 @@
 .tlui-style-panel {
   display: none;
 }
+
+/* App.css */
+.submenu {
+  position: relative;
+  display: none; /* Hidden by default */
+  background-color: white;
+  border: 1px solid #f4ee9b;
+  padding: 0px;
+  z-index: 10;
+}
+
+.menu-item-react:hover .submenu {
+  display: block; /* Show on hover */
+}
+
+.submenu-item {
+  padding: 5px 10px;
+  cursor: pointer;
+}
+
+.submenu-item:hover {
+  background-color: #f0f0f0;
+}
