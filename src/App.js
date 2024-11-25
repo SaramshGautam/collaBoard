@@ -5,11 +5,13 @@ import "tldraw/tldraw.css";
 import "./App.css";
 import CustomContextMenu from "./components/CustomContextMenu";
 import Navbar from "./components/navbar/Navbar";
+import ContextToolbarComponent from "./components/ContextToolbarComponent";
 
 // Define the components object
 const components = {
   Navbar: Navbar,
   ContextMenu: CustomContextMenu,
+  InFrontOfTheCanvas: ContextToolbarComponent,
 };
 
 export default function App() {

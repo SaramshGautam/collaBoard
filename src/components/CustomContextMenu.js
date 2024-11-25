@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import {
   DefaultContextMenu,
-  TldrawUiMenuItem,
   TldrawUiMenuGroup,
   DefaultContextMenuContent,
   useEditor,
@@ -11,6 +10,10 @@ import "../App.css";
 import HistoryCommentPanel from "./HistoryCommentPanel";
 import ToggleExpandButton from "./ToggleExpandButton";
 import CommentBox from "./CommentBox";
+import ReactionTooltip from "./tooltip/ReactionTooltip";
+import CommentIconWithCounter from "./CommentIconWithCounter";
+import ReactionsMenu from "./ReactionsMenu";
+import CommentMenu from "./CommentMenu";
 
 export default function CustomContextMenu(props) {
   const editor = useEditor();
@@ -20,15 +23,10 @@ export default function CustomContextMenu(props) {
   const [actionHistory, setActionHistory] = useState([]);
   const [isPanelCollapsed, setIsPanelCollapsed] = useState(false);
   const [shapeReactions, setShapeReactions] = useState({});
-  const [shapeToRibbonMap, setShapeToRibbonMap] = useState({});
-  const [groupIds, setGroupIds] = useState({});
-
-  const reactions = [
-    { id: "like", label: "Like", icon: "👍" },
-    { id: "dislike", label: "Dislike", icon: "👎" },
-    { id: "confused", label: "Confused", icon: "❓" },
-    { id: "surprised", label: "Surprised", icon: "❗️" },
-  ];
+  // const [shapeToRibbonMap, setShapeToRibbonMap] = useState({});
+  // const [groupIds, setGroupIds] = useState({});
+  const [hoveredShape, setHoveredShape] = useState(null);
+  const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
 
   const togglePanel = () => {
     setIsPanelCollapsed(!isPanelCollapsed);
@@ -50,255 +48,8 @@ export default function CustomContextMenu(props) {
       setSelectedShape(shape);
       editor.select(shape.id);
 
-      // Minimize all other ribbons
-      Object.keys(shapeToRibbonMap).forEach((shapeId) => {
-        const ribbonId = shapeToRibbonMap[shapeId];
-        if (ribbonId && editor.getShape(ribbonId)) {
-          editor.updateShapes([
-            {
-              id: ribbonId,
-              props: { w: 50 }, // Minimized width for unselected ribbons
-            },
-          ]);
-        }
-      });
-
-      // Maximize the ribbon for the selected shape
-      const ribbonId = shapeToRibbonMap[shape.id];
-      if (ribbonId && editor.getShape(ribbonId)) {
-        editor.updateShapes([
-          {
-            id: ribbonId,
-            props: { w: 200 }, // Maximized width for selected ribbon
-          },
-        ]);
-      }
       console.log("Shape ID:", shape.id);
-    } else {
-      setSelectedShape(null);
-      console.log("No shape found at this point.");
     }
-  };
-
-  // const handleReactions = ({
-  //   reactionId,
-  //   shapeId,
-  //   offsetX = -10,
-  //   offsetY = 10,
-  // }) => {
-  //   if (!shapeId) return;
-
-  //   const shape = editor.getShape(shapeId);
-
-  //   if (!shape) {
-  //     console.error(`Shape with ID ${shapeId} not found.`);
-  //     return;
-  //   }
-
-  //   const { x = 0, y = 0, props = {} } = shape;
-  //   const ribbonHeight = 20; // Fixed height for the ribbon
-  //   const ribbonOffsetX = offsetX; // Horizontal offset for the ribbon
-  //   const ribbonOffsetY = offsetY; // Vertical offset for the ribbon
-
-  //   const reaction = reactions.find((r) => r.id === reactionId);
-
-  //   if (!reaction) return;
-
-  //   setShapeReactions((prevReactions) => {
-  //     const currentReactions = prevReactions[shapeId] || {};
-  //     const updatedReactions = {
-  //       ...currentReactions,
-  //       [reaction.icon]: (currentReactions[reaction.icon] || 0) + 1,
-  //     };
-
-  //     // Serialize reactions as a single-line string of icons
-  //     const ribbonIcons = Object.entries(updatedReactions)
-  //       .map(([reactionIcon, count]) => `${reactionIcon}:${count} `)
-  //       .join(" ");
-
-  //     // Dynamically calculate ribbon width based on the length of the reaction string
-  //     const ribbonWidth = Math.max(100, ribbonIcons.length * 15);
-
-  //     const ribbonX = x + (props.w || 50) + ribbonOffsetX;
-  //     const ribbonY = y + ribbonOffsetY;
-
-  //     let ribbonId = shapeToRibbonMap[shapeId]; // Check if ribbon exists
-
-  //     if (ribbonId && editor.getShape(ribbonId)) {
-  //       // Update the existing ribbon
-  //       editor.updateShapes([
-  //         {
-  //           id: ribbonId,
-  //           props: {
-  //             text: ribbonIcons,
-  //             w: shapeId === selectedShape?.id ? ribbonWidth : 50, // Maximize if selected, minimize otherwise
-  //           },
-  //         },
-  //       ]);
-  //     } else {
-  //       // Create a new ribbon
-  //       ribbonId = `shape:${nanoid()}`;
-  //       editor.createShapes([
-  //         {
-  //           id: ribbonId,
-  //           type: "geo",
-  //           x: ribbonX,
-  //           y: ribbonY,
-  //           props: {
-  //             geo: "rectangle",
-  //             w: shapeId === selectedShape?.id ? ribbonWidth : 50, // Maximize if selected
-  //             h: ribbonHeight,
-  //             text: ribbonIcons,
-  //             color: "yellow",
-  //             fill: "solid",
-  //             verticalAlign: "middle",
-  //           },
-  //         },
-  //       ]);
-  //       setShapeToRibbonMap((prevMap) => ({
-  //         ...prevMap,
-  //         [shapeId]: ribbonId,
-  //       }));
-  //     }
-
-  //     // Ensure ribbon and shape are grouped
-  //     const groupShapes = [shapeId, ribbonId].filter((id) =>
-  //       editor.getShape(id)
-  //     );
-
-  //     // Ungroup any existing group if valid
-  //     const existingGroupId = groupIds[shapeId];
-  //     if (existingGroupId && editor.getShape(existingGroupId)) {
-  //       editor.ungroupShapes([existingGroupId]);
-  //     }
-
-  //     // Create new group with shape and ribbon
-  //     const newGroupId = editor.groupShapes(groupShapes);
-  //     setGroupIds((prev) => ({ ...prev, [shapeId]: newGroupId }));
-
-  //     return {
-  //       ...prevReactions,
-  //       [shapeId]: updatedReactions,
-  //     };
-  //   });
-
-  //   logAction({ userId: "User123", action: `${reactionId} added` });
-  // };
-
-  const handleReactions = ({
-    reactionId,
-    shapeId,
-    offsetX = -10,
-    offsetY = 10,
-  }) => {
-    if (!shapeId) return;
-
-    const shape = editor.getShape(shapeId);
-
-    if (!shape) {
-      console.error(`Shape with ID ${shapeId} not found.`);
-      return;
-    }
-
-    const { x = 0, y = 0, props = {} } = shape;
-    const ribbonHeight = 20; // Fixed height for the ribbon
-    const ribbonOffsetX = offsetX; // Horizontal offset for the ribbon
-    const ribbonOffsetY = offsetY; // Vertical offset for the ribbon
-
-    const reaction = reactions.find((r) => r.id === reactionId);
-
-    if (!reaction) return;
-
-    setShapeReactions((prevReactions) => {
-      const currentReactions = prevReactions[shapeId] || {};
-      const updatedReactions = {
-        ...currentReactions,
-        [reaction.icon]: (currentReactions[reaction.icon] || 0) + 1,
-      };
-
-      // Serialize reactions as a single-line string of icons
-      const ribbonIcons = Object.entries(updatedReactions)
-        .map(([reactionIcon, count]) => `${reactionIcon}:${count} `)
-        .join(" ");
-
-      // Dynamically calculate ribbon width based on the length of the reaction string
-      const ribbonWidth = Math.max(100, ribbonIcons.length * 15);
-
-      const ribbonX = x + (props.w || 50) + ribbonOffsetX;
-      const ribbonY = y + ribbonOffsetY;
-
-      let ribbonId = shapeToRibbonMap[shapeId]; // Check if ribbon exists
-
-      if (ribbonId && editor.getShape(ribbonId)) {
-        // Update the existing ribbon
-        editor.updateShapes([
-          {
-            id: ribbonId,
-            props: {
-              text: shapeId === selectedShape?.id ? ribbonIcons : "", // Show text only for selected shape
-              w: shapeId === selectedShape?.id ? ribbonWidth : 50, // Maximize if selected, minimize otherwise
-            },
-          },
-        ]);
-      } else {
-        // Create a new ribbon
-        ribbonId = `shape:${nanoid()}`;
-        editor.createShapes([
-          {
-            id: ribbonId,
-            type: "geo",
-            x: ribbonX,
-            y: ribbonY,
-            props: {
-              geo: "rectangle",
-              w: shapeId === selectedShape?.id ? ribbonWidth : 50, // Maximize if selected
-              h: ribbonHeight,
-              text: shapeId === selectedShape?.id ? ribbonIcons : "", // Hide text for unselected shapes
-              color: "yellow",
-              fill: "solid",
-              verticalAlign: "middle",
-            },
-          },
-        ]);
-        setShapeToRibbonMap((prevMap) => ({
-          ...prevMap,
-          [shapeId]: ribbonId,
-        }));
-      }
-
-      // Ensure ribbon and shape are grouped
-      const groupShapes = [shapeId, ribbonId].filter((id) =>
-        editor.getShape(id)
-      );
-
-      // Ungroup any existing group if valid
-      const existingGroupId = groupIds[shapeId];
-      if (existingGroupId && editor.getShape(existingGroupId)) {
-        editor.ungroupShapes([existingGroupId]);
-      }
-
-      // Create new group with shape and ribbon
-      const newGroupId = editor.groupShapes(groupShapes);
-      setGroupIds((prev) => ({ ...prev, [shapeId]: newGroupId }));
-
-      return {
-        ...prevReactions,
-        [shapeId]: updatedReactions,
-      };
-    });
-
-    logAction({ userId: "User123", action: `${reactionId} added` });
-  };
-
-  const handleReactionClick = (reactionId) => {
-    if (!selectedShape) return;
-
-    handleReactions({
-      reactionId,
-      shapeId: selectedShape.id,
-      offsetX: -10,
-      offsetY: 10,
-    });
   };
 
   const handleCommentClick = () => {
@@ -318,8 +69,41 @@ export default function CustomContextMenu(props) {
     }));
   };
 
+  const renderCommentIconWithCounter = (shapeId) => {
+    const shapeComments = comments[shapeId] || [];
+    if (shapeComments.length === 0) return null;
+
+    const shape = editor.getShape(shapeId);
+    if (!shape) return;
+
+    const { x, y } = shape;
+
+    return (
+      <CommentIconWithCounter
+        shapeId={shapeId}
+        count={shapeComments.length}
+        x={x}
+        y={y}
+      />
+    );
+  };
+
   return (
     <div onContextMenu={handleContextMenu}>
+      {Object.keys(shapeReactions).map((shapeId) => {
+        const shape = editor.getShape(shapeId);
+        return (
+          <div key={shapeId} className="shape-container">
+            {/* Render the shape */}
+            <div className="shape">{shapeId}</div>
+          </div>
+        );
+      })}
+      <ReactionTooltip
+        reactions={shapeReactions[hoveredShape?.id] || {}}
+        position={tooltipPosition}
+        visible={hoveredShape !== null}
+      />
       <DefaultContextMenu {...props}>
         <TldrawUiMenuGroup id="reactions">
           <div
@@ -331,24 +115,7 @@ export default function CustomContextMenu(props) {
             }}
             className="menu-item-react"
           >
-            <TldrawUiMenuItem
-              id="react"
-              label="React 🙂"
-              icon="🙂"
-              readonlyOk
-              className="menu-item-react"
-            />
-            <div className="submenu">
-              {reactions.map((reaction) => (
-                <div
-                  key={reaction.id}
-                  className="submenu-item"
-                  onClick={() => handleReactionClick(reaction.id)}
-                >
-                  {reaction.icon} {reaction.label}
-                </div>
-              ))}
-            </div>
+            <ReactionsMenu />
           </div>
           <div
             style={{
@@ -356,16 +123,12 @@ export default function CustomContextMenu(props) {
               padding: "5px",
               fontWeight: "bold",
             }}
-          >
-            <TldrawUiMenuItem
-              id="comment"
-              label="Comment 💬"
-              icon="💬"
-              readonlyOk
-              onSelect={handleCommentClick}
-              className="menu-item-comment"
-            />
-          </div>
+            className="menu-item-comment"
+          ></div>
+          <CommentMenu
+            selectedShape={selectedShape}
+            setShowCommentBox={setShowCommentBox}
+          />
         </TldrawUiMenuGroup>
         <DefaultContextMenuContent />
       </DefaultContextMenu>
@@ -391,7 +154,13 @@ export default function CustomContextMenu(props) {
         addComment={addComment}
         showCommentBox={showCommentBox}
         onClose={() => setShowCommentBox(false)}
+        logAction={logAction}
       />
+      {Object.keys(comments).map((shapeId) => (
+        <div key={shapeId} style={{ position: "relative" }}>
+          {renderCommentIconWithCounter(shapeId)}
+        </div>
+      ))}
     </div>
   );
 }
