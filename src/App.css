@@ -325,10 +325,16 @@
 }
 
 .submenu-item {
-  padding: 5px 10px;
+  display: flex;
+  align-items: center;
+  padding: 5px;
   cursor: pointer;
 }
 
 .submenu-item:hover {
-  background-color: #f0f0f0;
+  background-color: #e0f7fa;
+}
+
+.submenu-item TldrawUiMenuItem {
+  margin-right: 5px;
 }
