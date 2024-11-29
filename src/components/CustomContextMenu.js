@@ -4,6 +4,7 @@ import {
   TldrawUiMenuGroup,
   DefaultContextMenuContent,
   useEditor,
+  TLUiOverrides,
 } from "tldraw";
 import { nanoid } from "nanoid";
 import "../App.css";
@@ -15,18 +16,52 @@ import CommentIconWithCounter from "./CommentIconWithCounter";
 import ReactionsMenu from "./ReactionsMenu";
 import CommentMenu from "./CommentMenu";
 
-export default function CustomContextMenu(props) {
+export default function CustomContextMenu({
+  shapeReactions,
+  setShapeReactions,
+  selectedShape,
+  setSelectedShape,
+  ...props
+}) {
   const editor = useEditor();
-  const [selectedShape, setSelectedShape] = useState(null);
+  // const [selectedShape, setSelectedShape] = useState(null);
   const [showCommentBox, setShowCommentBox] = useState(false);
   const [comments, setComments] = useState({});
   const [actionHistory, setActionHistory] = useState([]);
   const [isPanelCollapsed, setIsPanelCollapsed] = useState(false);
-  const [shapeReactions, setShapeReactions] = useState({});
+  // const [shapeReactions, setShapeReactions] = useState({});
   // const [shapeToRibbonMap, setShapeToRibbonMap] = useState({});
   // const [groupIds, setGroupIds] = useState({});
   const [hoveredShape, setHoveredShape] = useState(null);
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
+  // handleReactionSelect(selectedShape.id, reactionType);
+  const handleReactionSelect = (id, reactionType) => {
+    if (!selectedShape) return;
+
+    setShapeReactions((prevReactions) => {
+      // Get the current reactions for the selected shape, or initialize it
+      const currentReactions = prevReactions[selectedShape.id] || {
+        Like: 0,
+        Dislike: 0,
+        Confused: 0,
+        Surprised: 0,
+      };
+
+      // Increment the count for the selected reaction type
+      const updatedReactions = {
+        ...currentReactions,
+        [reactionType]: currentReactions[reactionType] + 1,
+      };
+
+      // Update the shapeReactions state
+      return {
+        ...prevReactions,
+        [selectedShape.id]: updatedReactions,
+      };
+    });
+
+    console.log("--- Updated Shape Reactions ---", shapeReactions);
+  };
 
   const togglePanel = () => {
     setIsPanelCollapsed(!isPanelCollapsed);
@@ -115,7 +150,15 @@ export default function CustomContextMenu(props) {
             }}
             className="menu-item-react"
           >
-            <ReactionsMenu />
+            {/* <ReactionsMenu onReactionSelect={handleReactionSelect} /> */}
+            <ReactionsMenu
+              onReactionSelect={(reactionType) => {
+                // handleReactionSelect(reactionType);
+                if (selectedShape) {
+                  handleReactionSelect(selectedShape.id, reactionType);
+                }
+              }}
+            />
           </div>
           <div
             style={{
@@ -130,6 +173,7 @@ export default function CustomContextMenu(props) {
             setShowCommentBox={setShowCommentBox}
           />
         </TldrawUiMenuGroup>
+
         <DefaultContextMenuContent />
       </DefaultContextMenu>
       <div className="panelContainerWrapper">

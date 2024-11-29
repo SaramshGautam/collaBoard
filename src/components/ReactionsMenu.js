@@ -41,7 +41,8 @@ export default function ReactionsMenu({ onReactionSelect }) {
           id={reaction.id}
           label={reaction.label}
           icon={reaction.icon}
-          onSelect={() => console.log(`${reaction.label} selected`)}
+          //   onSelect={() => console.log(`${reaction.label} selected`)}
+          onSelect={() => onReactionSelect(reaction.label)}
         />
       ))}
     </TldrawUiMenuSubmenu>
