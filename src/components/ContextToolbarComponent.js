@@ -2,7 +2,7 @@ import React from "react";
 import { TldrawUiIcon, track, useEditor } from "tldraw";
 import "tldraw/tldraw.css";
 
-const SIZES = [
+const REACTIONS = [
   { value: "Like", icon: "check-circle" },
   { value: "Dislike", icon: "cross-circle" },
   { value: "Surprised", icon: "warning-triangle" },
@@ -10,7 +10,7 @@ const SIZES = [
 ];
 
 const ContextToolbarComponent = track(
-  ({ selectedShape, shapeReactions, commentCounts }) => {
+  ({ selectedShape, shapeReactions, commentCounts, onReactionClick }) => {
     const editor = useEditor();
     const tooltipWidth = 200;
 
@@ -51,7 +51,7 @@ const ContextToolbarComponent = track(
             alignItems: "center",
             boxShadow: "0 0 0 1px rgba(0,0,0,0.1), 0 4px 8px rgba(0,0,0,0.1)",
             background: "var(--color-panel)",
-            padding: "10px",
+            padding: "5px",
           }}
         >
           {/* Comment Section */}
@@ -80,15 +80,24 @@ const ContextToolbarComponent = track(
 
           {/* Reactions Section */}
           <div style={{ display: "flex", gap: "10px" }}>
-            {SIZES.map(({ value, icon }) => (
+            {REACTIONS.map(({ value, icon }) => (
               <div
                 key={value}
                 style={{
                   display: "flex",
                   alignItems: "center",
                   gap: "3px",
-                  background: "#f9f9f9",
+                  cursor: "pointer",
+                  background:
+                    selectedShapeReactions[value] > 0 ? "#d3f9d8" : "#f9f9f9",
+                  borderBottom:
+                    selectedShapeReactions[value] > 0
+                      ? "2px solid #34a853"
+                      : "0px solid #ccc", // Highlight border
+                  padding: "1px",
+                  borderRadius: "4px",
                 }}
+                onClick={() => onReactionClick(selectedId, value)}
               >
                 <TldrawUiIcon icon={icon} />
                 <span style={{ fontSize: "12px" }}>
