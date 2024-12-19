@@ -1,103 +1,3 @@
-// import {
-//   DefaultSizeStyle,
-//   Tldraw,
-//   TldrawUiIcon,
-//   TLEditorComponents,
-//   track,
-//   useEditor,
-// } from "tldraw";
-// import "tldraw/tldraw.css";
-
-// const SIZES = [
-//   { value: "like", icon: "check-circle" },
-//   { value: "dislike", icon: "cross-circle" },
-//   { value: "confused", icon: "question-mark-circle" },
-//   { value: "surprised", icon: "warning-triangle" },
-// ];
-
-// const ContextToolbarComponent = track((selectedShape,shapeReactions) => {
-//   const editor = useEditor();
-//   const showToolbar = editor.isIn("select.idle");
-//   if (!showToolbar) return null;
-
-//   const selectionRotatedPageBounds = editor.getSelectionRotatedPageBounds();
-//   if (!selectionRotatedPageBounds) return null;
-
-//   const size = editor.getSharedStyles().get(DefaultSizeStyle);
-//   if (!size) return null;
-//   const currentSize = size.type === "shared" ? size.value : undefined;
-
-//   const pageCoordinates = editor.pageToViewport(
-//     selectionRotatedPageBounds.point
-//   );
-
-//   return (
-//     <div
-//       style={{
-//         position: "absolute",
-//         pointerEvents: "all",
-//         top: pageCoordinates.y - 42,
-//         left: pageCoordinates.x,
-//         width: selectionRotatedPageBounds.width * editor.getZoomLevel(),
-//         display: "flex",
-//         justifyContent: "center",
-//         alignItems: "center",
-//       }}
-//       onPointerDown={(e) => e.stopPropagation()}
-//     >
-//       <div
-//         style={{
-//           borderRadius: 8,
-//           display: "flex",
-//           boxShadow: "0 0 0 1px rgba(0,0,0,0.1), 0 4px 8px rgba(0,0,0,0.1)",
-//           background: "var(--color-panel)",
-//           width: "fit-content",
-//           alignItems: "center",
-//         }}
-//       >
-//         {SIZES.map(({ value, icon }) => {
-//           const isActive = value === currentSize;
-//           console.log("--- shape Reaction 0 --- ", shapeReactions);
-//           const isReacted = shapeReactions[0] === value;
-//           return (
-//             <div
-//               key={value}
-//               style={{
-//                 display: "flex",
-//                 alignItems: "center",
-//                 justifyContent: "center",
-//                 height: 32,
-//                 width: 32,
-//                 background: isActive ? "var(--color-muted-2)" : "transparent",
-//               }}
-//               onClick={() =>
-//                 editor.setStyleForSelectedShapes(DefaultSizeStyle, value)
-//               }
-//             >
-//               <TldrawUiIcon icon={icon} />
-//               {isReacted && (
-//                 <div
-//                   style={{
-//                     position: "absolute",
-//                     top: 4,
-//                     right: 4,
-//                     height: 8,
-//                     width: 8,
-//                     borderRadius: "50%",
-//                     background: "red",
-//                   }}
-//                 />
-//               )}
-//             </div>
-//           );
-//         })}
-//       </div>
-//     </div>
-//   );
-// });
-
-// export default ContextToolbarComponent;
-
 import React from "react";
 import { TldrawUiIcon, track, useEditor } from "tldraw";
 import "tldraw/tldraw.css";
@@ -105,81 +5,102 @@ import "tldraw/tldraw.css";
 const SIZES = [
   { value: "Like", icon: "check-circle" },
   { value: "Dislike", icon: "cross-circle" },
-  { value: "Confused", icon: "question-mark-circle" },
   { value: "Surprised", icon: "warning-triangle" },
+  { value: "Confused", icon: "question-mark-circle" },
 ];
 
-const ContextToolbarComponent = track(({ selectedShape, shapeReactions }) => {
-  const editor = useEditor();
-  const selectionRotatedPageBounds = editor.getSelectionRotatedPageBounds();
-  if (!selectionRotatedPageBounds) return null;
+const ContextToolbarComponent = track(
+  ({ selectedShape, shapeReactions, commentCounts }) => {
+    const editor = useEditor();
+    const tooltipWidth = 200;
 
-  // Ensure there is a selected shape
-  if (!selectedShape) return null;
+    // Get the bounding box of the selected shapes in canvas (page) coordinates, accounting for rotation.
+    const selectionRotatedPageBounds = editor.getSelectionRotatedPageBounds();
+    if (!selectionRotatedPageBounds || !selectedShape) return null;
 
-  // Get the shape ID
-  const selectedId = selectedShape.id;
+    //Calculating the center of the selected bounds
+    const centerX =
+      selectionRotatedPageBounds.minX + selectionRotatedPageBounds.width / 2;
+    const centerY = selectionRotatedPageBounds.minY;
 
-  // Fetch reactions for the selected shape from shapeReactions
-  const selectedShapeReactions = shapeReactions[selectedId];
+    const viewportCenter = editor.pageToViewport({ x: centerX, y: centerY });
 
-  // Log reactions for debugging
-  console.log("Selected Shape Reactions:", selectedShapeReactions);
+    const selectedId = selectedShape.id;
+    const selectedShapeReactions = shapeReactions[selectedId] || {};
+    const selectedShapeCommentCount = commentCounts[selectedId] || 0;
 
-  // Ensure there are reactions for the selected shape
-  if (!selectedShapeReactions) return null;
+    console.log("Selected shape comment count:", selectedShapeCommentCount);
 
-  return (
-    <div
-      style={{
-        position: "absolute",
-        pointerEvents: "all",
-        top: selectedShape.y - 42, // Adjust based on shape's position
-        width: selectionRotatedPageBounds.width * editor.getZoomLevel(),
-        left: selectedShape.x, // Adjust based on shape's position
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        zIndex: 10,
-      }}
-    >
+    return (
       <div
         style={{
-          borderRadius: 8,
+          position: "absolute",
+          pointerEvents: "all",
+          top: viewportCenter.y - 42,
+          left: viewportCenter.x - tooltipWidth / 2,
           display: "flex",
-          flexDirection: "column",
+          justifyContent: "center",
           alignItems: "center",
-          boxShadow: "0 0 0 1px rgba(0,0,0,0.1), 0 4px 8px rgba(0,0,0,0.1)",
-          background: "var(--color-panel)",
-          padding: "10px",
+          zIndex: 10,
         }}
       >
-        {/* Display Reaction Counts */}
-        <div style={{ display: "flex", gap: "15px", flexWrap: "wrap" }}>
-          {SIZES.map(({ value, icon }) => (
-            <div
-              key={value}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "3px",
-                background: "#f9f9f9",
-              }}
-            >
-              <TldrawUiIcon icon={icon} />
-              <span
+        <div
+          style={{
+            borderRadius: 8,
+            display: "flex",
+            alignItems: "center",
+            boxShadow: "0 0 0 1px rgba(0,0,0,0.1), 0 4px 8px rgba(0,0,0,0.1)",
+            background: "var(--color-panel)",
+            padding: "10px",
+          }}
+        >
+          {/* Comment Section */}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "5px",
+            }}
+          >
+            <TldrawUiIcon icon="tool-note" />
+            <span style={{ fontSize: "12px" }}>
+              {selectedShapeCommentCount}
+            </span>
+          </div>
+
+          {/* Vertical Separator */}
+          <div
+            style={{
+              width: "1px",
+              height: "20px",
+              backgroundColor: "rgba(0, 0, 0, 0.3)",
+              margin: "0 5px", // Adjust spacing around the separator
+            }}
+          ></div>
+
+          {/* Reactions Section */}
+          <div style={{ display: "flex", gap: "10px" }}>
+            {SIZES.map(({ value, icon }) => (
+              <div
+                key={value}
                 style={{
-                  fontSize: "12px",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "3px",
+                  background: "#f9f9f9",
                 }}
               >
-                {selectedShapeReactions[value] || 0}
-              </span>
-            </div>
-          ))}
+                <TldrawUiIcon icon={icon} />
+                <span style={{ fontSize: "12px" }}>
+                  {selectedShapeReactions[value] || 0}
+                </span>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
-    </div>
-  );
-});
+    );
+  }
+);
 
 export default ContextToolbarComponent;
