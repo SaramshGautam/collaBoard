@@ -2,9 +2,12 @@ import firebase_admin
 from firebase_admin import credentials, firestore
 from flask import Flask, request, jsonify, session
 import os
+from datetime import datetime
 import pandas as pd
 from flask_cors import CORS
 from flask import jsonify, request, redirect, url_for, flash
+from werkzeug.utils import secure_filename
+from google.cloud.firestore import SERVER_TIMESTAMP
 
 
 # Initialize Flask App
@@ -41,6 +44,13 @@ def after_request(response):
 def home():
     return "Welcome to the home page!"
 
+# Check if file extension is allowed
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+# Create the 'uploads' folder if it doesn't exist
+if not os.path.exists(UPLOAD_FOLDER):
+    os.makedirs(UPLOAD_FOLDER)
 
 @app.route('/login', methods=['POST'])
 def login():
@@ -56,16 +66,6 @@ def login():
         
         return jsonify({'message': 'Logged in successfully'}), 200
     return jsonify({'error': 'Invalid credentials'}), 401
-
-
-
-# Check if file extension is allowed
-def allowed_file(filename):
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
-
-# Create the 'uploads' folder if it doesn't exist
-if not os.path.exists(UPLOAD_FOLDER):
-    os.makedirs(UPLOAD_FOLDER)
 
 @app.route('/addclassroom', methods=['POST'])
 def addclassroom():
@@ -179,6 +179,99 @@ def classroom_view(class_name):
         "projects": projects,
         "role": role,
     })
+
+@app.route('/test_cors', methods=['GET'])
+def test_cors():
+    return jsonify({"message": "CORS is working!"}), 200
+
+@app.route('/api/add_project/<class_name>', methods=['POST'])
+def add_project(class_name):
+    try:
+        # Parse incoming data
+        project_name = request.form.get('project_name')
+        due_date = request.form.get('due_date')
+        description = request.form.get('description')
+        team_file = request.files.get('team_file')
+
+        if not project_name or not due_date or not description:
+            return jsonify({"message": "Project name, due date, and description are required."}), 400
+
+        # Convert due_date to a valid timestamp (ISO format)
+        current_date_time = datetime.now().strftime('%Y-%m-%dT%H:%M')
+
+        # Add project to the database
+        project_ref = db.collection('classrooms').document(class_name).collection('Projects').document(project_name)
+        project_ref.set({
+            'projectName': project_name,
+            'dueDate': due_date,
+            'description': description,  # Use lowercase 'description' here
+            'createdAt': current_date_time
+        })
+
+        # Handle team file
+        teams_created = False
+        if team_file and allowed_file(team_file.filename):
+            filename = secure_filename(team_file.filename)
+            file_path = os.path.join('uploads', filename)
+            team_file.save(file_path)
+            try:
+                # Read the file (CSV or Excel)
+                data = pd.read_csv(file_path) if filename.endswith('.csv') else pd.read_excel(file_path)
+                required_columns = ['firstname', 'lastname', 'email', 'teamname']
+                
+                # Validate required columns
+                if any(col not in data.columns for col in required_columns):
+                    return jsonify({"message": f"File must include columns: {', '.join(required_columns)}."}), 400
+                
+                # Fetch students in the class
+                class_students = [student.id for student in db.collection('classrooms').document(class_name).collection('students').stream()]
+                
+                # Process each row and add team info
+                for _, row in data.iterrows():
+                    student_email = row['email']
+                    team_name = row['teamname']
+                    student_name = f"{row['lastname']}, {row['firstname']}"
+                    
+                    if student_email not in class_students:
+                        return jsonify({"message": f"Student {student_name} is not part of this class."}), 400
+                    
+                    # Add student to the respective team
+                    team_ref = db.collection('classrooms').document(class_name).collection('Projects').document(project_name).collection('teams').document(team_name)
+                    team_ref.set({student_email: student_name}, merge=True)
+
+                teams_created = True
+
+            except Exception as e:
+                return jsonify({"message": f"Error processing team file: {str(e)}"}), 500
+
+        return jsonify({
+            "message": "Project added successfully.",
+            "teamsCreated": teams_created
+        }), 200
+
+    except Exception as e:
+        return jsonify({"message": f"An unexpected error occurred: {str(e)}"}), 500
+
+def update_due_dates():
+    classrooms = db.collection('classrooms').stream()
+    for classroom in classrooms:
+        class_id = classroom.id
+        projects = db.collection('classrooms').document(class_id).collection('Projects').stream()
+        
+        for project in projects:
+            project_data = project.to_dict()
+            if 'dueDate' in project_data and isinstance(project_data['dueDate'], str):
+                try:
+                    # Convert string to datetime and update Firestore
+                    new_due_date = datetime.strptime(project_data['dueDate'], '%Y-%m-%dT%H:%M')
+                    db.collection('classrooms').document(class_id).collection('Projects').document(project.id).update({
+                        'dueDate': new_due_date
+                    })
+                    print(f"Updated project {project.id} in classroom {class_id}")
+                except ValueError:
+                    print(f"Skipping project {project.id} in classroom {class_id}: Invalid dueDate format")
+
+update_due_dates()
 
 @app.route('/api/classroom/<class_name>/project/<project_name>/manage_team', methods=['GET', 'POST'])
 def manage_team(class_name, project_name):

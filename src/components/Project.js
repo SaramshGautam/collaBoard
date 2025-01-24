@@ -21,14 +21,27 @@ const Project = () => {
 
         if (projectDoc.exists()) {
           const projectData = projectDoc.data();
+          let dueDate = 'No due date set.';
+        
+          if (projectData.dueDate) {
+            if (projectData.dueDate.toDate) {
+              // Firestore Timestamp object
+              dueDate = projectData.dueDate.toDate().toLocaleDateString();
+            } else {
+              // Fallback if dueDate is a plain string
+              dueDate = new Date(projectData.dueDate).toLocaleDateString();
+            }
+          }
+        
           setProjectDetails({
             description: projectData.description || 'No description provided.',
-            dueDate: projectData.dueDate?.toDate().toLocaleDateString() || 'No due date set.',
+            dueDate,
           });
         } else {
           console.log('No such project exists!');
           setProjectDetails({});
         }
+        
 
         // Fetch teams
         const teamsRef = collection(db, 'classrooms', className, 'Projects', projectName, 'teams');

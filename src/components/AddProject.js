@@ -10,35 +10,54 @@ const AddProject = () => {
   const [dueDate, setDueDate] = useState('');
   const [teamFile, setTeamFile] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+  const [role, setRole] = useState(localStorage.getItem('role')); // Get role from localStorage
+  const [userEmail, setUserEmail] = useState(localStorage.getItem('userEmail')); // Get role from localStorage
+
 
   const handleFileChange = (e) => {
     setTeamFile(e.target.files[0]);
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setIsSubmitting(true);
 
-    const formData = new FormData();
-    formData.append('project_name', projectName);
-    formData.append('description', description);
-    formData.append('due_date', dueDate);
-    if (teamFile) formData.append('team_file', teamFile);
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  setIsSubmitting(true);
 
-    try {
-      // Adjust the URL and method according to your backend API
-      await axios.post(`/api/add_project/${className}`, formData, {
+  // Initialize formData before appending values
+  const formData = new FormData();
+  formData.append('project_name', projectName);
+  formData.append('description', description);
+  formData.append('due_date', dueDate);
+  if (teamFile) formData.append('team_file', teamFile);
+
+  // Append role and user email to the form data
+  formData.append("role", role);
+  formData.append("userEmail", userEmail);
+  
+
+  try {
+      const response = await axios.post(`http://localhost:5000/api/add_project/${className}`, formData, {
         headers: {
-          'Content-Type': 'multipart/form-data',
+            'Content-Type': 'multipart/form-data',
+            'Authorization': `Bearer ${role}:${userEmail}`, // Pass role and email in the Authorization header
         },
-      });
+    });
+    
+
+      // Success response
+      setErrorMessage('');
+      alert(response.data.message); // Show success message
       navigate(`/classroom/${className}`); // Redirect to classroom page after successful submission
-    } catch (error) {
-      console.error('Error adding project:', error);
-    } finally {
+  } catch (error) {
+      // Error handling
+      setErrorMessage(error.response?.data?.message || 'Something went wrong!');
+  } finally {
       setIsSubmitting(false);
-    }
-  };
+  }
+};
+
+
 
   return (
     <div className="container mt-2">
@@ -46,9 +65,7 @@ const AddProject = () => {
 
       <form onSubmit={handleSubmit} encType="multipart/form-data">
         <div className="mb-3">
-          <label htmlFor="project_name" className="form-label">
-            <i className="bi bi-card-text"></i> Project Name
-          </label>
+          <label htmlFor="project_name" className="form-label">Project Name</label>
           <input
             type="text"
             id="project_name"
@@ -61,9 +78,7 @@ const AddProject = () => {
         </div>
 
         <div className="mb-3">
-          <label htmlFor="description" className="form-label">
-            <i className="bi bi-pencil-square"></i> Project Description
-          </label>
+          <label htmlFor="description" className="form-label">Project Description</label>
           <textarea
             id="description"
             name="description"
@@ -76,9 +91,7 @@ const AddProject = () => {
         </div>
 
         <div className="mb-3">
-          <label htmlFor="due_date" className="form-label">
-            <i className="bi bi-calendar-event"></i> Due Date
-          </label>
+          <label htmlFor="due_date" className="form-label">Due Date</label>
           <input
             type="datetime-local"
             id="due_date"
@@ -87,15 +100,12 @@ const AddProject = () => {
             value={dueDate}
             onChange={(e) => setDueDate(e.target.value)}
             required
-            min={new Date().toISOString().slice(0, 16)} // Set current date and time as the minimum allowed value
-            max="9999-12-31T23:59"
+            min={new Date().toISOString().slice(0, 16)}
           />
         </div>
 
         <div className="mb-3">
-          <label htmlFor="team_file" className="form-label">
-            <i className="bi bi-file-earmark-spreadsheet"></i> Team CSV/Excel File (Optional)
-          </label>
+          <label htmlFor="team_file" className="form-label">Team CSV/Excel File (Optional)</label>
           <input
             type="file"
             id="team_file"
@@ -106,17 +116,14 @@ const AddProject = () => {
           />
         </div>
 
+        {errorMessage && <div className="alert alert-danger">{errorMessage}</div>}
+
         <div className="d-flex justify-content-start gap-2">
-          <button type="submit" className="btn btn-dark" id="upload-btn" disabled={isSubmitting}>
+          <button type="submit" className="btn btn-dark" disabled={isSubmitting}>
             {isSubmitting ? (
-              <>
-                <span className="spinner-border spinner-border-sm" aria-hidden="true"></span>
-                <span>Uploading...</span>
-              </>
+              <span className="spinner-border spinner-border-sm" aria-hidden="true"></span>
             ) : (
-              <>
-                <i className="bi bi-upload"></i> Upload
-              </>
+              'Upload'
             )}
           </button>
           <button
@@ -124,7 +131,7 @@ const AddProject = () => {
             className="btn btn-dark"
             onClick={() => navigate(`/classroom/${className}`)}
           >
-            <i className="bi bi-arrow-left"></i> Back to Classroom
+            Back to Classroom
           </button>
         </div>
       </form>
