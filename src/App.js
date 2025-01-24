@@ -1,9 +1,19 @@
 import React, { useState } from "react";
-import { Routes, Route, useNavigate } from "react-router-dom";
+import { Routes, Route, useNavigate,useLocation } from "react-router-dom";
 // Importing pages
 import LoginPage from "./components/LoginPage"; 
 import TeachersHome from "./components/TeachersHome"; 
 import StudentsHome from "./components/StudentsHome"; 
+import Classroom from './components/Classroom';
+import AddProject from './components/AddProject';
+import AddStudent from './components/AddStudent';
+import AddClassroom from './components/AddClassroom';
+import ManageTeams from './components/ManageTeam';
+import Project from './components/Project';
+import EditProject from './components/EditProject';
+import EditStudent from './components/EditStudent';
+import ManageStudent from './components/ManageStudent'; 
+import Team from './components/Team';
 // Firebase imports
 import { initializeApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
@@ -98,6 +108,7 @@ const App = () => {
   const [role, setRole] = useState(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
 
   const googleLogin = async () => {
     try {
@@ -132,36 +143,34 @@ const App = () => {
 };
 
   return (
-    <Routes>
-      {/* Login Page */}
-      
-      <Route
-        path="/"
-        element={<LoginPage onLogin={googleLogin} />}
-      />
-      {/* Teacher's Home */}
-      <Route
-        path="/teachers-home"
-        element={
-          <>
-              <Navbar />
-              <TeachersHome onWhiteboardClick={() => navigate("/whiteboard")} />
-            </>
-        }
-      />
-      {/* Student's Home */}
-      <Route
-        path="/students-home"
-        element={
-          <>
-              <Navbar />
-              <StudentsHome onWhiteboardClick={() => navigate("/whiteboard")} />
-            </>
-        }
-      />
-      {/* Collaborative Whiteboard */}
-      <Route path="/whiteboard" element={<CollaborativeWhiteboard />} />
-    </Routes>
+<Routes>
+  {/* Login Page */}
+  <Route path="/" element={<LoginPage onLogin={googleLogin} />} />
+  
+  {/* Teacher's Home */}
+  <Route path="/teachers-home" element={<><Navbar /><TeachersHome /></>} />
+  
+  {/* Student's Home */}
+  <Route path="/students-home" element={<><Navbar /><StudentsHome /></>} />
+  
+  {/* Classroom Management */}
+  <Route path="/classroom/:className" element={<><Navbar /><Classroom /></>} />
+  <Route path="/classroom/:className/add-project" element={<><Navbar /><AddProject /></>} />
+  <Route path="/classroom/:className/project/:projectName" element={<><Navbar /><Project /></>} />
+  <Route path="/classroom/:className/project/:projectName/edit" element={<><Navbar /><EditProject /></>} />
+  <Route path="/classroom/:className/project/:projectName/team/:teamName" element={<><Navbar /><Team /></>} />
+  
+  {/* Manage Students */}
+  <Route path="/manage-students/:className" element={<><Navbar /><ManageStudent /></>} />
+  <Route path="/classroom/:className/project/:projectName/manage-teams" element={<><Navbar /><ManageTeams /></>} />
+
+  {/* Add Classroom */}
+  <Route path="/add-classroom" element={<><Navbar /><AddClassroom /></>} />
+  
+  {/* Collaborative Whiteboard */}
+  <Route path="/whiteboard/:className/:projectName/:teamName" element={<CollaborativeWhiteboard />} />
+</Routes>
+
   );
 }
 

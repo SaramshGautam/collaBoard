@@ -338,3 +338,50 @@
 .submenu-item TldrawUiMenuItem {
   margin-right: 5px;
 }
+
+#unassigned-students-section {
+  display: inline-block;
+  width: 45%;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  margin-right: 10px;
+}
+
+#teams-container {
+  display: inline-block;
+  width: 45%;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+}
+
+.team-list {
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  padding: 10px;
+  margin-bottom: 15px;
+}
+
+.team-box {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.student-box {
+  background-color: #f9f9f9;
+  padding: 5px;
+  border-radius: 5px;
+  display: inline-block;
+}
+
+.student-item {
+  margin-bottom: 10px;
+  cursor: move;
+}
+
+.no-students {
+  font-style: italic;
+  color: gray;
+}

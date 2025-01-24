@@ -1,47 +1,111 @@
-/* .navbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10px 20px;
-  background-color: #14213d;
-} */
-
+/* Navbar layout */
 .navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 20px;
+  background-color: #000000; /* Ash background */
+  color: white;
+  z-index: 1000;
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
-  height: 60px; /* Adjust height as needed */
+  height: 60px; /* Adjust navbar height */
+}
+
+.navbar-left {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  background-color: #14213d; /* Navbar background color */
-  padding: 0 20px;
-  color: white;
-  z-index: 1000; /* Ensure navbar stays on top */
 }
 
 .navbar-title {
   font-size: 24px;
-  color: white;
   font-weight: bold;
+  margin-right: 20px;
+  cursor: pointer;
+}
+
+.navbar-links {
+  display: flex;
+  gap: 20px;
 }
 
 .navbar-links a {
-  margin-left: 15px;
   color: white;
   text-decoration: none;
   font-size: 16px;
+  transition: color 0.3s ease;
 }
 
-.navbar-profile {
-  cursor: pointer;
-  margin-left: auto;
+.navbar-links a:hover {
+  color: #f1f1f1; /* Light hover color */
+}
+
+.navbar-right {
+  display: flex;
+  align-items: center;
 }
 
 .profile-icon {
-  width: 32px;
-  height: 32px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
+  border: 2px solid white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.profile-icon:hover {
+  transform: scale(1.1);
+  border-color: #d3d3d3;
+}
+
+/* Profile dropdown menu (Bootstrap style) */
+.profile-dropdown {
+  display: none;
+  position: absolute;
+  top: 60px;
+  right: 20px;
+  background-color: #333; /* Ash background for dropdown */
+  border-radius: 5px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+  z-index: 1001;
+}
+
+.profile-dropdown .dropdown-item {
   color: white;
+  font-size: 1rem;
+  padding: 10px 20px;
+  display: flex;
+  align-items: center;
+}
+
+.profile-dropdown .dropdown-item i {
+  font-size: 18px;
+}
+
+.profile-dropdown .dropdown-item:hover {
+  background-color: #555; /* Slightly lighter ash color */
+}
+
+/* Show the dropdown when active */
+.profile-dropdown.show {
+  display: block;
+}
+
+/* Improved logout button */
+.profile-dropdown .dropdown-item {
+  font-weight: 600;
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.profile-dropdown .dropdown-item:hover {
+  background-color: #222; /* Darker hover effect */
+  color: #f1f1f1; /* Lighter text on hover */
 }

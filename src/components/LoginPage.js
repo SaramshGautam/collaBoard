@@ -31,8 +31,13 @@ const LoginPage = () => {
 
       const role = userDoc.data().role;
 
-      // Store the role in localStorage
+      // Store the role and email in localStorage for later use
       localStorage.setItem('role', role);
+      localStorage.setItem('userEmail', userEmail);
+
+      // Log for debugging purposes
+      console.log("User Email:", userEmail);
+      console.log("User Role:", role);
 
       // Redirect based on role
       if (role === 'teacher') {
