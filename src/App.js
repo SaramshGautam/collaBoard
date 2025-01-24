@@ -55,6 +55,8 @@ import CustomActionsMenu from "./components/CustomActionsMenu";
 //   },
 // };
 
+// Firebase configuration
+
 const CustomToolbar = (props) => {
   const tools = useTools();
   // const isCollectionToolSelected = useIsToolSelected(tools["collection"]);
