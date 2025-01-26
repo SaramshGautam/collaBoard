@@ -101,48 +101,48 @@ const Project = () => {
       {/* Edit Project Button for Teacher */}
       {role === 'teacher' && (
   <button
-    className="btn btn-primary mb-3"
+    className="btn btn-dark mt-3 me-3"  // 'me-3' adds margin to the right of the button
     onClick={handleEditProjectClick}
   >
-    Edit Project
+    <i className="bi bi-pencil-fill me-2"></i> Edit Project
   </button>
 )}
 
+{/* Manage Teams Button for Teacher */}
+{role === 'teacher' && (
+  <button
+    className="btn btn-dark mt-3"
+    onClick={handleManageTeams}
+  >
+    <i className="bi bi-people me-2"></i> Manage Teams
+  </button>
+)}
 
-      {/* Manage Teams Button for Teacher */}
-      {role === 'teacher' && (
+<h2 className="teams-header mt-4">List of Teams</h2>
+{teams.length > 0 ? (
+  <ul className="list-group teams-list">
+    {teams.map((team) => (
+      <li key={team.name} className="list-group-item team-item">
+        <Link to={`/classroom/${className}/project/${projectName}/team/${team.name}`} className="team-link text-dark">  {/* Change class here */}
+          <i className="bi bi-people-fill"></i> {team.name}
+        </Link>
         <button
-          className="btn btn-primary mb-3"
-          onClick={handleManageTeams}
+          className="btn btn-dark btn-sm ms-3"  // Change btn-primary to btn-dark
+          onClick={() => handleWhiteboardClick(team.name)}
         >
-          Manage Teams
+           <i className="bi bi-tv"></i> Open Whiteboard
         </button>
-      )}
+      </li>
+    ))}
+  </ul>
+) : (
+  <p className="no-teams-message">No teams available.</p>
+)}
 
-      <h2 className="teams-header mt-4">List of Teams</h2>
-      {teams.length > 0 ? (
-        <ul className="list-group teams-list">
-          {teams.map((team) => (
-            <li key={team.name} className="list-group-item team-item">
-              <Link to={`/classroom/${className}/project/${projectName}/team/${team.name}`} className="team-link">
-                <i className="bi bi-people-fill"></i> {team.name}
-              </Link>
-              <button
-                className="btn btn-primary btn-sm ms-3"
-                onClick={() => handleWhiteboardClick(team.name)}
-              >
-                Whiteboard
-              </button>
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <p className="no-teams-message">No teams available.</p>
-      )}
+<Link to={`/classroom/${className}`} className="btn btn-dark mt-3">
+  <i className="bi bi-arrow-left me-2"></i> Back to Classroom
+</Link>
 
-      <Link to={`/classroom/${className}`} className="btn btn-dark">
-        <i className="bi bi-arrow-left me-2"></i> Back to Classroom
-      </Link>
     </div>
   );
 };

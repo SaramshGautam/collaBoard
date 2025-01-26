@@ -68,7 +68,7 @@ const Classroom = () => {
         </div>
       )}
 
-      <h2 className="mb-4"><i className="bi bi-folder2"></i> Projects</h2>
+      <h2 className="section-title mb-3"><i className="bi bi-folder2"></i> Projects</h2>
       {loading ? (
         <p>Loading projects...</p>
       ) : (
@@ -87,8 +87,8 @@ const Classroom = () => {
         </ul>
       )}
 
-      <button className="btn btn-dark" onClick={handleBackToDashboard}>
-        <i className="bi bi-arrow-left me-2"></i> Back to Dashboard
+      <button className="btn btn-dark mt-3" onClick={handleBackToDashboard}>
+        <i className="bi bi-arrow-left"></i> Back to Dashboard
       </button>
     </div>
   );

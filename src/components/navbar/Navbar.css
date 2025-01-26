@@ -13,6 +13,16 @@
   right: 0;
   height: 60px; /* Adjust navbar height */
 }
+/* Add this to your main content or container class to avoid overlap */
+body {
+  padding-top: 60px; /* Adjust this value to the height of your navbar */
+}
+
+/* Or if you're using a wrapper div */
+.content-wrapper {
+  padding-top: 60px; /* Add padding to the content */
+}
+
 
 .navbar-left {
   display: flex;

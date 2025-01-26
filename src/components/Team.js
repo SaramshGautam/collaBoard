@@ -1,17 +1,16 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { getFirestore, doc, getDoc, collection, getDocs } from 'firebase/firestore';
 
 const Team = () => {
   const { className, projectName, teamName } = useParams();
-  const [teamDetails, setTeamDetails] = useState(null);
+  const [teamMembers, setTeamMembers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [role, setRole] = useState(localStorage.getItem('role')); // Role from local storage
   const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchTeamDetails = async () => {
+    const fetchTeamMembers = async () => {
       try {
         setLoading(true); // Start loading
         const db = getFirestore();
@@ -19,32 +18,56 @@ const Team = () => {
         const decodedProjectName = decodeURIComponent(projectName);
         const decodedTeamName = decodeURIComponent(teamName);
 
-        const teamRef = doc(
+        // Fetch the project document to confirm the project exists
+        const projectRef = doc(
           db,
           'classrooms',
           decodedClassName,
           'Projects',
-          decodedProjectName,
-          'teams',
-          decodedTeamName
+          decodedProjectName
         );
 
-        const teamSnapshot = await getDoc(teamRef);
+        const projectSnapshot = await getDoc(projectRef);
 
-        if (teamSnapshot.exists()) {
-          setTeamDetails(teamSnapshot.data());
+        if (projectSnapshot.exists()) {
+          // Fetch the team members from the 'teams' subcollection
+          const teamRef = doc(
+            db,
+            'classrooms',
+            decodedClassName,
+            'Projects',
+            decodedProjectName,
+            'teams',
+            decodedTeamName
+          );
+
+          const teamSnapshot = await getDoc(teamRef);
+
+          if (teamSnapshot.exists()) {
+            const members = [];
+            const teamData = teamSnapshot.data();
+            for (const [LSUID, name] of Object.entries(teamData)) {
+              members.push({
+                LSUID: LSUID,
+                name: name
+              });
+            }
+            setTeamMembers(members);
+          } else {
+            setError(`No members found in team "${decodedTeamName}"`);
+          }
         } else {
-          setError(`No team found with the name "${decodedTeamName}"`);
+          setError(`Project "${decodedProjectName}" not found.`);
         }
       } catch (err) {
-        setError("An error occurred while fetching team details.");
-        console.error("Fetch error:", err);
+        setError('An error occurred while fetching team details.');
+        console.error('Fetch error:', err);
       } finally {
         setLoading(false); // Stop loading
       }
     };
 
-    fetchTeamDetails();
+    fetchTeamMembers();
   }, [className, projectName, teamName]);
 
   const handleWhiteboardClick = () => {
@@ -59,7 +82,7 @@ const Team = () => {
         <div className="alert alert-danger" role="alert">
           {error}
         </div>
-      ) : teamDetails ? (
+      ) : teamMembers.length > 0 ? (
         <>
           <h1 className="dashboard-title mb-4">
             <i className="bi bi-person-workspace"></i> Team: {teamName}
@@ -70,9 +93,9 @@ const Team = () => {
           <div className="team-members mb-4">
             <h5 className="mb-3">Team Members</h5>
             <ul className="list-group">
-              {Object.entries(teamDetails).map(([email, student]) => (
-                <li key={email} className="list-group-item">
-                  <strong>{student.name}</strong> ({student.email})
+              {teamMembers.map((student, index) => (
+                <li key={index} className="list-group-item">
+                  <strong>{student.name}</strong> 
                 </li>
               ))}
             </ul>
@@ -82,16 +105,20 @@ const Team = () => {
           <div className="action-buttons mb-4">
             <button
               onClick={handleWhiteboardClick}
-              className="btn btn-primary"
+              className="btn btn-dark mb-3"
             >
-              <i className="bi bi-file-earmark-white"></i> Open Whiteboard
+              <i className="bi bi-tv"></i> Open Whiteboard
             </button>
           </div>
 
           <div className="action-buttons mb-4">
-            <button onClick={() => navigate(`/classroom/${className}`)} className="btn btn-dark">
-              <i className="bi bi-arrow-left-circle"></i> Back to Classroom
-            </button>
+          <button
+            type="button"
+            className="btn btn-dark"
+            onClick={() => navigate(`/classroom/${className}/project/${projectName}`)}
+          >
+            <i className="bi bi-arrow-left me-2"></i> Back to Project
+          </button>
           </div>
         </>
       ) : (

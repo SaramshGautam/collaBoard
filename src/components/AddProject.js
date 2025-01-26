@@ -119,20 +119,27 @@ const handleSubmit = async (e) => {
         {errorMessage && <div className="alert alert-danger">{errorMessage}</div>}
 
         <div className="d-flex justify-content-start gap-2">
-          <button type="submit" className="btn btn-dark" disabled={isSubmitting}>
-            {isSubmitting ? (
-              <span className="spinner-border spinner-border-sm" aria-hidden="true"></span>
-            ) : (
-              'Upload'
-            )}
-          </button>
+  <button type="submit" className="btn btn-dark" disabled={isSubmitting}>
+    {isSubmitting ? (
+      <>
+        <span className="spinner-border spinner-border-sm" aria-hidden="true"></span>
+        <span>Uploading...</span>
+      </>
+    ) : (
+      <>
+        <i className="bi bi-upload"></i> Upload
+      </>
+    )}
+  </button>
+
           <button
-            type="button"
-            className="btn btn-dark"
-            onClick={() => navigate(`/classroom/${className}`)}
-          >
-            Back to Classroom
-          </button>
+  type="button"
+  className="btn btn-dark"
+  onClick={() => navigate(`/classroom/${className}`)}
+>
+  <i className="bi bi-arrow-left"></i> Back to Classroom
+</button>
+
         </div>
       </form>
     </div>
