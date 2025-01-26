@@ -1,62 +1,58 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { getFirestore, doc, getDoc, collection, getDocs } from 'firebase/firestore';
-import { useLocation } from 'react-router-dom';
+import { getFirestore, collection, getDocs } from 'firebase/firestore';
 
 const Classroom = () => {
   const { className } = useParams(); // Get the class name from URL params
   const navigate = useNavigate();
-  const location = useLocation();
   const [projects, setProjects] = useState([]);
   const [role, setRole] = useState(localStorage.getItem('role')); // Get role from localStorage
   const [userEmail, setUserEmail] = useState(localStorage.getItem('userEmail')); // Get role from localStorage
   const db = getFirestore();
   const [loading, setLoading] = useState(true);
 
-
-    useEffect(() => {
-      const fetchClassroomData = async () => {
-        try {
-          // Get projects for the classroom
-          const projectsRef = collection(db, 'classrooms', className, 'Projects'); // Use 'Projects' with correct case
-          const querySnapshot = await getDocs(projectsRef);
-          const projectsData = querySnapshot.docs.map(doc => doc.data().projectName);
+  useEffect(() => {
+    const fetchClassroomData = async () => {
+      try {
+        // Get projects for the classroom
+        const projectsRef = collection(db, 'classrooms', className, 'Projects'); // Use 'Projects' with correct case
+        const querySnapshot = await getDocs(projectsRef);
+        const projectsData = querySnapshot.docs.map(doc => doc.data().projectName);
     
-         //console.log("User Email:", userEmail);
         console.log("User Role:", role);
         console.log("User Email:", userEmail);
         console.log("Fetched Projects Data:", projectsData);
     
-          setProjects(projectsData);
-          setLoading(false);
-        } catch (error) {
-          console.error("Error fetching classroom data:", error);
-        }
-      };
-    
-      fetchClassroomData();
-    }, [className, db]);
-    
-    const handleAddProject = () => {
-      navigate(`/classroom/${className}/add-project`);
-    };
-    
-    const handleManageStudents = () => {
-      navigate(`/manage-students/${className}`);
-    };
-    
-    const handleProjectClick = (projectName) => {
-      navigate(`/classroom/${className}/project/${projectName}`);
-    };
-    
-    const handleBackToDashboard = () => {
-      if (role === 'teacher') {
-        navigate('/teachers-home');
-      } else if (role === 'student') {
-        navigate('/students-home');
+        setProjects(projectsData);
+        setLoading(false);
+      } catch (error) {
+        console.error("Error fetching classroom data:", error);
       }
     };
-    
+  
+    fetchClassroomData();
+  }, [className, db]);
+  
+  const handleAddProject = () => {
+    navigate(`/classroom/${className}/add-project`);
+  };
+  
+  const handleManageStudents = () => {
+    navigate(`/classroom/${className}/manage-students`);
+  };
+  
+  const handleProjectClick = (projectName) => {
+    navigate(`/classroom/${className}/project/${projectName}`);
+  };
+  
+  const handleBackToDashboard = () => {
+    if (role === 'teacher') {
+      navigate('/teachers-home');
+    } else if (role === 'student') {
+      navigate('/students-home');
+    }
+  };
+
   return (
     <div className="container mt-2 pt-2">
       <h1 className="mb-4">Classroom: <span className="text-dark">{className}</span></h1>
@@ -91,7 +87,7 @@ const Classroom = () => {
         </ul>
       )}
 
-      <button className="btn btn-secondary mt-3" onClick={handleBackToDashboard}>
+      <button className="btn btn-dark" onClick={handleBackToDashboard}>
         <i className="bi bi-arrow-left me-2"></i> Back to Dashboard
       </button>
     </div>

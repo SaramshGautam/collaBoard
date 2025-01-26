@@ -63,7 +63,7 @@ const TeacherHome = () => {
           </h1>
 
           <div className="action-buttons mb-4">
-            <a href="/add-classroom" className="btn btn-dark btn-lg">
+            <a href="/add-classroom" className="btn btn-dark">
               <i className="bi bi-plus-circle"></i> Add Classroom
             </a>
           </div>

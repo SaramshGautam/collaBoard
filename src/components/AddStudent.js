@@ -1,15 +1,19 @@
 import React, { useState } from 'react';
-import axios from 'axios'; // Import axios for sending the form data
+import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 
 const AddStudent = ({ className }) => {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
+  const [lsuId, setLsuId] = useState('');  // New state for LSU ID
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const navigate = useNavigate(); // Use navigate hook
 
   const handleFirstNameChange = (event) => setFirstName(event.target.value);
   const handleLastNameChange = (event) => setLastName(event.target.value);
   const handleEmailChange = (event) => setEmail(event.target.value);
+  const handleLsuIdChange = (event) => setLsuId(event.target.value);  // Handler for LSU ID
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -20,17 +24,22 @@ const AddStudent = ({ className }) => {
       first_name: firstName,
       last_name: lastName,
       email: email,
+      lsu_id: lsuId,  // Including LSU ID in the data
     };
 
     try {
-      // Replace with your backend endpoint for adding students
-      await axios.post(`/add-student/${className}`, studentData);
-      // Handle successful form submission, e.g., redirect or show success message
+      // Make sure the URL is correctly formed
+      await axios.post(`http://localhost:5000/api/classroom/${className}/add_student`, studentData);
+      alert(`Student ${firstName} ${lastName} added successfully!`);
     } catch (error) {
       console.error('Error adding student:', error);
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleBackClick = () => {
+    navigate(`/classroom/${className}/manage-students`); // Navigate programmatically
   };
 
   return (
@@ -74,6 +83,18 @@ const AddStudent = ({ className }) => {
             onChange={handleEmailChange}
           />
         </div>
+        <div className="mb-3">
+          <label htmlFor="lsu_id" className="form-label"><i className="bi bi-id-card"></i> LSU ID</label>
+          <input
+            type="text"
+            name="lsu_id"
+            id="lsu_id"
+            className="form-control"
+            required
+            value={lsuId}
+            onChange={handleLsuIdChange}  // Handling LSU ID change
+          />
+        </div>
         <div className="d-flex justify-content-start gap-2">
           <button type="submit" className="btn btn-dark" disabled={isSubmitting}>
             {isSubmitting ? (
@@ -83,9 +104,12 @@ const AddStudent = ({ className }) => {
             )}
             <span>{isSubmitting ? 'Adding...' : 'Add Student'}</span>
           </button>
-          <a href={`/manage-students/${className}`} className="btn btn-secondary">
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={handleBackClick} >
             <i className="bi bi-arrow-left"></i> Back to Manage Students
-          </a>
+          </button>
         </div>
       </form>
     </div>

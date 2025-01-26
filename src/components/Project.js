@@ -47,18 +47,21 @@ const Project = () => {
         const teamsRef = collection(db, 'classrooms', className, 'Projects', projectName, 'teams');
         const teamsSnapshot = await getDocs(teamsRef);
 
-        const teamsData = {};
+        const teamsData = [];
         teamsSnapshot.forEach((teamDoc) => {
-          teamsData[teamDoc.id] = Object.values(teamDoc.data());
+          teamsData.push({
+            name: teamDoc.id,
+            members: Object.values(teamDoc.data()),
+          });
         });
 
         setTeams(teamsData);
 
         // Check if the student is part of any team
         if (role === 'student') {
-          Object.keys(teamsData).forEach((teamName) => {
-            if (Object.keys(teamsData[teamName]).includes(localStorage.getItem('userEmail'))) {
-              setStudentTeamAssigned(teamName);
+          teamsData.forEach((team) => {
+            if (team.members.some((member) => member.email === localStorage.getItem('userEmail'))) {
+              setStudentTeamAssigned(team.name);
             }
           });
         }
@@ -95,16 +98,16 @@ const Project = () => {
       )}
 
       <h2 className="teams-header mt-4">List of Teams</h2>
-      {Object.keys(teams).length > 0 ? (
+      {teams.length > 0 ? (
         <ul className="list-group teams-list">
-          {Object.keys(teams).map((teamName) => (
-            <li key={teamName} className="list-group-item team-item">
-              <Link to={`/classroom/${className}/project/${projectName}/team/${teamName}`} className="team-link">
-                <i className="bi bi-people-fill"></i> {teamName}
+          {teams.map((team) => (
+            <li key={team.name} className="list-group-item team-item">
+              <Link to={`/classroom/${className}/project/${projectName}/team/${team.name}`} className="team-link">
+                <i className="bi bi-people-fill"></i> {team.name}
               </Link>
               <button
                 className="btn btn-primary btn-sm ms-3"
-                onClick={() => handleWhiteboardClick(teamName)}
+                onClick={() => handleWhiteboardClick(team.name)}
               >
                 Whiteboard
               </button>
@@ -115,7 +118,7 @@ const Project = () => {
         <p className="no-teams-message">No teams available.</p>
       )}
 
-      <Link to={`/classroom/${className}`} className="btn btn-secondary back-btn mt-4">
+      <Link to={`/classroom/${className}`} className="btn btn-dark">
         <i className="bi bi-arrow-left me-2"></i> Back to Classroom
       </Link>
     </div>

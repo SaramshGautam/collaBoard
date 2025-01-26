@@ -12,7 +12,7 @@ const ManageTeams = () => {
     const fetchTeamsAndStudents = async () => {
       try {
         const db = getFirestore();
-
+  
         // Fetch students
         const studentsRef = collection(db, 'classrooms', className, 'students');
         const studentsSnapshot = await getDocs(studentsRef);
@@ -20,7 +20,8 @@ const ManageTeams = () => {
           email: doc.id,
           name: `${doc.data().firstName} ${doc.data().lastName}`,
         }));
-        
+        console.log('Fetched students:', studentsList); // Check if names are correct
+  
         // Fetch teams
         const teamsRef = collection(db, 'classrooms', className, 'Projects', projectName, 'teams');
         const teamsSnapshot = await getDocs(teamsRef);
@@ -28,23 +29,25 @@ const ManageTeams = () => {
           teamName: doc.id,
           students: Object.entries(doc.data()).map(([email, name]) => ({ email, name })),
         }));
-
+        console.log('Fetched teams:', teamsList); // Check if names are correct
+  
         // Get a list of all assigned students by email
         const assignedEmails = teamsList.flatMap(team => team.students.map(student => student.email));
-
+  
         // Filter unassigned students
         const unassignedStudents = studentsList.filter(student => !assignedEmails.includes(student.email));
-
+  
         setStudents(unassignedStudents);
         setTeams(teamsList);
-
+  
       } catch (error) {
         console.error('Error fetching teams or students:', error);
       }
     };
-
+  
     fetchTeamsAndStudents();
   }, [className, projectName]);
+  
 
   const handleCreateTeam = () => {
     if (teamName && !teams.some(team => team.teamName === teamName)) {
@@ -70,9 +73,6 @@ const ManageTeams = () => {
         project_name: projectName,
       }),
     })
-    
-    
-    
       .then(response => response.json())
       .then(data => {
         if (data.error) {
@@ -93,11 +93,10 @@ const ManageTeams = () => {
     event.preventDefault();
     const email = event.dataTransfer.getData('email');
     const name = event.dataTransfer.getData('name');
-
+  
     if (email && name) {
       const updatedTeams = teams.map(team => {
         if (team.teamName === teamName) {
-          // Ensure the student is not already in the team
           if (!team.students.some(student => student.email === email)) {
             return { ...team, students: [...team.students, { email, name }] };
           }
@@ -107,6 +106,7 @@ const ManageTeams = () => {
       setTeams(updatedTeams);
     }
   };
+  
 
   const handleRemoveStudent = (email, teamName) => {
     // Step 1: Remove student from the selected team
@@ -138,7 +138,6 @@ const ManageTeams = () => {
     // Step 3: Update the teams state
     setTeams(updatedTeams);
   };
-  
 
   return (
     <div className="content-wrapper">
@@ -159,25 +158,31 @@ const ManageTeams = () => {
       </div>
 
       <div className="mt-4">
-        <div id="unassigned-students-section">
-          <h4>Unassigned Students</h4>
-          <ul className="student-list">
-            {students.length === 0 ? (
-              <li className="no-students">All students assigned</li>
-            ) : (
-              students.map((student) => (
-                <li
-                  key={student.email}
-                  className="student-item"
-                  draggable
-                  onDragStart={(e) => handleDragStart(e, student)}
-                >
-                  {student.name}
-                </li>
-              ))
-            )}
-          </ul>
-        </div>
+      <div className="mt-4">
+  <div id="unassigned-students-section">
+    <h4>Unassigned Students</h4>
+    <ul className="student-list">
+    {students.length === 0 ? (
+  <li className="no-students">All students assigned</li>
+) : (
+  students.map((student) => (
+    <li
+      key={student.email}
+      className="student-item"
+      draggable
+      onDragStart={(e) => handleDragStart(e, student)}
+    >
+      {student.name ? student.name : student.email}
+    </li>
+  ))
+)}
+
+
+
+    </ul>
+  </div>
+</div>
+
 
         <div id="teams-container">
           {teams.map((team) => (
@@ -189,21 +194,24 @@ const ManageTeams = () => {
             >
               <h4>{team.teamName}</h4>
               <ul className="student-list">
-                {team.students.length === 0 ? (
-                  <li className="no-students">No students assigned</li>
-                ) : (
-                  team.students.map((student) => (
-                    <li key={student.email} className="student-item">
-                      {student.name}
-                      <button
-                        className="btn btn-danger btn-sm ml-2"
-                        onClick={() => handleRemoveStudent(student.email, team.teamName)}
-                      >
-                        Remove
-                      </button>
-                    </li>
-                  ))
-                )}
+              {team.students.length === 0 ? (
+  <li className="no-students">No students assigned</li>
+) : (
+  team.students.map((student) => (
+    <li key={student.email} className="student-item">
+      {student.name ? student.name : student.email}
+      <button
+        className="btn btn-danger btn-sm ml-2"
+        onClick={() => handleRemoveStudent(student.email, team.teamName)}
+      >
+        Remove
+      </button>
+    </li>
+  ))
+)}
+
+
+
               </ul>
             </div>
           ))}

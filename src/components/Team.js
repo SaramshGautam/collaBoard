@@ -1,32 +1,50 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { getFirestore, doc, getDoc } from 'firebase/firestore';
+import { getFirestore, doc, getDoc, collection, getDocs } from 'firebase/firestore';
 
 const Team = () => {
   const { className, projectName, teamName } = useParams();
-  const [teamMembers, setTeamMembers] = useState([]);
+  const [teamDetails, setTeamDetails] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [role, setRole] = useState(localStorage.getItem('role')); // Role from local storage
   const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchTeamMembers = async () => {
+    const fetchTeamDetails = async () => {
       try {
+        setLoading(true); // Start loading
         const db = getFirestore();
-        const teamRef = doc(db, 'classrooms', className, 'Projects', projectName, 'teams', teamName);
-        const teamDoc = await getDoc(teamRef);
+        const decodedClassName = decodeURIComponent(className);
+        const decodedProjectName = decodeURIComponent(projectName);
+        const decodedTeamName = decodeURIComponent(teamName);
 
-        if (teamDoc.exists()) {
-          setTeamMembers(Object.values(teamDoc.data())); // Extract member names
+        const teamRef = doc(
+          db,
+          'classrooms',
+          decodedClassName,
+          'Projects',
+          decodedProjectName,
+          'teams',
+          decodedTeamName
+        );
+
+        const teamSnapshot = await getDoc(teamRef);
+
+        if (teamSnapshot.exists()) {
+          setTeamDetails(teamSnapshot.data());
         } else {
-          console.log('No such team exists!');
-          setTeamMembers([]);
+          setError(`No team found with the name "${decodedTeamName}"`);
         }
-      } catch (error) {
-        console.error('Error fetching team members:', error);
-        setTeamMembers([]);
+      } catch (err) {
+        setError("An error occurred while fetching team details.");
+        console.error("Fetch error:", err);
+      } finally {
+        setLoading(false); // Stop loading
       }
     };
 
-    fetchTeamMembers();
+    fetchTeamDetails();
   }, [className, projectName, teamName]);
 
   const handleWhiteboardClick = () => {
@@ -34,28 +52,51 @@ const Team = () => {
   };
 
   return (
-    <div className="container team-container mt-2 pt-2">
-      <h1>Team: {teamName}</h1>
-      <h2>Members:</h2>
-      {teamMembers.length > 0 ? (
-        <ul className="list-group">
-          {teamMembers.map((member, index) => (
-            <li key={index} className="list-group-item">{member}</li>
-          ))}
-        </ul>
+    <div className="container mt-2 pt-2">
+      {loading ? (
+        <p>Loading...</p>
+      ) : error ? (
+        <div className="alert alert-danger" role="alert">
+          {error}
+        </div>
+      ) : teamDetails ? (
+        <>
+          <h1 className="dashboard-title mb-4">
+            <i className="bi bi-person-workspace"></i> Team: {teamName}
+          </h1>
+          <h3 className="section-title mb-3">Project: {projectName}</h3>
+          <h4 className="section-title mb-3">Class: {className}</h4>
+
+          <div className="team-members mb-4">
+            <h5 className="mb-3">Team Members</h5>
+            <ul className="list-group">
+              {Object.entries(teamDetails).map(([email, student]) => (
+                <li key={email} className="list-group-item">
+                  <strong>{student.name}</strong> ({student.email})
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Whiteboard Button */}
+          <div className="action-buttons mb-4">
+            <button
+              onClick={handleWhiteboardClick}
+              className="btn btn-primary"
+            >
+              <i className="bi bi-file-earmark-white"></i> Open Whiteboard
+            </button>
+          </div>
+
+          <div className="action-buttons mb-4">
+            <button onClick={() => navigate(`/classroom/${className}`)} className="btn btn-dark">
+              <i className="bi bi-arrow-left-circle"></i> Back to Classroom
+            </button>
+          </div>
+        </>
       ) : (
-        <p>No members found for this team.</p>
+        <p>No team data available.</p>
       )}
-
-      {/* Whiteboard Button */}
-      <button className="btn btn-primary mt-3" onClick={handleWhiteboardClick}>
-        <i className="bi bi-pencil-square me-2"></i> Whiteboard
-      </button>
-
-      {/* Back to Project Button */}
-      <Link to={`/classroom/${className}/project/${projectName}`} className="btn btn-secondary back-btn mt-4">
-        <i className="bi bi-arrow-left me-2"></i> Back to Project
-      </Link>
     </div>
   );
 };

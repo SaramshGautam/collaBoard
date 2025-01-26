@@ -1,5 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from 'react';
 import { Routes, Route, useNavigate,useLocation } from "react-router-dom";
+import { useParams } from 'react-router-dom';
+
 // Importing pages
 import LoginPage from "./components/LoginPage"; 
 import TeachersHome from "./components/TeachersHome"; 
@@ -57,6 +59,7 @@ import CustomActionsMenu from "./components/CustomActionsMenu";
 
 // Firebase configuration
 
+
 const CustomToolbar = (props) => {
   const tools = useTools();
   // const isCollectionToolSelected = useIsToolSelected(tools["collection"]);
@@ -105,10 +108,7 @@ const components = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const provider = new GoogleAuthProvider();
-const db = getFirestore(app);
 const App = () => {
-  const [role, setRole] = useState(null);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -158,12 +158,14 @@ const App = () => {
   {/* Classroom Management */}
   <Route path="/classroom/:className" element={<><Navbar /><Classroom /></>} />
   <Route path="/classroom/:className/add-project" element={<><Navbar /><AddProject /></>} />
+  <Route path="/classroom/:className/add-student" element={<><Navbar /><AddStudent /></>} />
   <Route path="/classroom/:className/project/:projectName" element={<><Navbar /><Project /></>} />
   <Route path="/classroom/:className/project/:projectName/edit" element={<><Navbar /><EditProject /></>} />
   <Route path="/classroom/:className/project/:projectName/team/:teamName" element={<><Navbar /><Team /></>} />
   
   {/* Manage Students */}
-  <Route path="/manage-students/:className" element={<><Navbar /><ManageStudent /></>} />
+  <Route path="/classroom/:className/manage-students" element={<><Navbar /><ManageStudent /></>} />
+  <Route path="/classroom/:className/manage-students/:studentId/edit" element={<><Navbar /><EditStudent /></>} />
   <Route path="/classroom/:className/project/:projectName/manage-teams" element={<><Navbar /><ManageTeams /></>} />
 
   {/* Add Classroom */}
@@ -177,8 +179,10 @@ const App = () => {
 }
 
 const CollaborativeWhiteboard = () => {
-  const store = useSyncDemo({ roomId: "collaBoard-abc123" });
-  //const store = useSyncDemo({ roomId: "collaBoard-xyz123" });
+  const { className, projectName, teamName } = useParams(); // Get params from URL
+  const roomId = `collaBoard-${className}-${projectName}-${teamName}`; // Create unique roomId based on class, project, and team
+  const store = useSyncDemo({ roomId }); // Use the unique roomId
+
   const [shapeReactions, setShapeReactions] = useState({});
   const [selectedShape, setSelectedShape] = useState(null);
   const [commentCounts, setCommentCounts] = useState({});

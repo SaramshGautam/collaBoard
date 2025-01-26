@@ -4,18 +4,18 @@ import axios from 'axios';
 
 const ManageStudent = () => {
     const navigate = useNavigate();
-    const { className } = useParams();  // Extract className from URL
+    const { className } = useParams(); // Extract className from URL
     const [students, setStudents] = useState([]);
     const [loading, setLoading] = useState(true);
 
     // Fetch students from the backend
     useEffect(() => {
-        if (!className) return;  // Ensure className exists before making the API request
+        if (!className) return; // Ensure className exists before making the API request
 
-        const fetchStudents = async () => {
+        const fetchStudents = async (classID) => {
             try {
-                const response = await axios.get(`/api/classroom/${className}/manage_students`);
-                setStudents(response.data.students || []); // Assuming the backend returns { students: [...] }
+                const response = await axios.get(`http://localhost:5000/api/classroom/${classID}/manage_students`);
+                setStudents(response.data.students);
                 setLoading(false);
             } catch (error) {
                 console.error("Error fetching students:", error);
@@ -23,17 +23,15 @@ const ManageStudent = () => {
             }
         };
 
-        fetchStudents();
+        fetchStudents(className); // Pass className as classID
     }, [className]);
 
     // Handle deleting a student
-    const handleDelete = async (studentId) => {
-        if (!className) return;
-
+    const handleDelete = async (lsuId) => {
         try {
-            await axios.post(`/api/classroom/${className}/delete_student/${studentId}`);
-            setStudents(students.filter((student) => student.id !== studentId)); // Remove student from the list
-            console.log(`Deleted student with ID: ${studentId}`);
+            const response = await axios.post(`http://localhost:5000/api/classroom/${className}/delete_student/${lsuId}`);
+            alert(response.data.message);
+            setStudents((prevStudents) => prevStudents.filter((student) => student.lsuId !== lsuId)); // Update state after deletion
         } catch (error) {
             console.error("Error deleting student:", error);
         }
@@ -48,7 +46,7 @@ const ManageStudent = () => {
             {/* Add Student Button */}
             <button
                 className="btn btn-dark mb-3"
-                onClick={() => navigate(`/add-student/${className}`)}
+                onClick={() => navigate(`/classroom/${className}/add-student`)}
             >
                 <i className="bi bi-person-plus"></i> Add New Student
             </button>
@@ -66,20 +64,20 @@ const ManageStudent = () => {
                     ) : students.length > 0 ? (
                         students.map((student) => (
                             <li
-                                key={student.id}
+                                key={student.lsuId} // Use LSU ID as key
                                 className="list-group-item d-flex justify-content-between align-items-center"
                             >
                                 <div>
                                     {/* Display student name as "LastName, FirstName" */}
                                     <strong>{student.lastName}, {student.firstName}</strong>{" "}
-                                    <span className="text-muted">({student.email})</span>
+                                    <span className="text-muted">({student.lsuId})</span>
                                 </div>
                                 <div className="d-flex align-items-center">
                                     {/* Edit Button */}
                                     <button
                                         className="btn btn-sm btn-outline-dark me-2"
                                         onClick={() =>
-                                            navigate(`/classroom/${className}/manage-students/${student.id}/edit`)
+                                            navigate(`/classroom/${className}/manage-students/${encodeURIComponent(student.lsuId)}/edit`)
                                         }
                                     >
                                         <i className="bi bi-pencil"></i> Edit
@@ -88,7 +86,7 @@ const ManageStudent = () => {
                                     {/* Delete Button */}
                                     <button
                                         className="btn btn-sm btn-outline-danger"
-                                        onClick={() => handleDelete(student.id)}
+                                        onClick={() => handleDelete(student.lsuId)} // Use LSU ID for deletion
                                     >
                                         <i className="bi bi-x-lg"></i>
                                     </button>
