@@ -81,11 +81,33 @@ const Project = () => {
     navigate(`/classroom/${className}/project/${projectName}/manage-teams`);
   };
 
+  const handleEditProject = () => {
+    navigate(`/classroom/${className}/project/${projectName}/edit`);
+  };
+  const handleEditProjectClick = () => {
+    // Pass the project details to EditProject page
+    navigate(`/classroom/${className}/project/${projectName}/edit`, {
+      state: { projectDetails }  // Passing the fetched project details here
+    });
+  };
+  
+
   return (
     <div className="container project-container mt-2 pt-2">
       <h1 className="project-title">Project: {projectName}</h1>
       <p><strong>Description:</strong> {projectDetails.description}</p>
       <p><strong>Due Date:</strong> {projectDetails.dueDate}</p>
+
+      {/* Edit Project Button for Teacher */}
+      {role === 'teacher' && (
+  <button
+    className="btn btn-primary mb-3"
+    onClick={handleEditProjectClick}
+  >
+    Edit Project
+  </button>
+)}
+
 
       {/* Manage Teams Button for Teacher */}
       {role === 'teacher' && (
@@ -124,5 +146,6 @@ const Project = () => {
     </div>
   );
 };
+
 
 export default Project;

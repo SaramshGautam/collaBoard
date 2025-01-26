@@ -1,14 +1,28 @@
-import React, { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 
 const EditProject = () => {
   const { className, projectName } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
+  
+  // Use the passed project details from location state (if available)
+  const initialProjectDetails = location.state?.projectDetails || {
+    description: '',
+    dueDate: '',
+  };
+
+  // Format the dueDate if necessary
+  const formatDateForInput = (date) => {
+    if (!date) return '';
+    const d = new Date(date);
+    return d.toISOString().slice(0, 16); // Format to YYYY-MM-DDTHH:MM
+  };
 
   const [formData, setFormData] = useState({
     projectName: projectName || '',
-    description: '',
-    dueDate: '',
+    description: initialProjectDetails.description,
+    dueDate: formatDateForInput(initialProjectDetails.dueDate), // Ensure correct format
     teamFile: null,
   });
 
@@ -31,7 +45,6 @@ const EditProject = () => {
       form.append('team_file', formData.teamFile);
     }
 
-    // Make an API call to save changes (placeholder logic)
     fetch(`/api/classroom/${className}/project/${projectName}/edit`, {
       method: 'POST',
       body: form,
