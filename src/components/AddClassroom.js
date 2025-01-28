@@ -61,8 +61,9 @@ const AddClassroom = () => {
 
 
   return (
-    <div className="container mt-2">
-      <h1 className="mb-4">Add New Classroom</h1>
+<div className="container mt-2">
+  <h1 className="classroom-heading fw-bold mb-4 fs-4">Add New Classroom</h1>
+
 
       {error && <div className="alert alert-danger">{error}</div>} {/* Display error message */}
 

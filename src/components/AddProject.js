@@ -60,8 +60,8 @@ const handleSubmit = async (e) => {
 
 
   return (
-    <div className="container mt-2">
-      <h1 className="mb-4">Add New Project</h1>
+<div className="container mt-2 pt-2">
+  <h1 className="classroom-heading fw-bold mb-4 fs-4">Add New Project</h1>
 
       <form onSubmit={handleSubmit} encType="multipart/form-data">
         <div className="mb-3">

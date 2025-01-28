@@ -66,14 +66,15 @@ const EditStudent = () => {
     };
 
     return (
-        <div className="container mt-2">
-            <h1>
-                <i className="bi bi-pencil-fill"></i> Edit Student: {student.firstName} {student.lastName}
-            </h1>
+<div className="container mt-2">
+  <h1 className="fw-bold mb-4 fs-4">
+    Edit Student: {student.firstName} {student.lastName}
+  </h1>
+
             <form onSubmit={handleSubmit}>
                 <div className="mb-3">
                     <label htmlFor="first_name" className="form-label">
-                        <i className="bi bi-person"></i> First Name:
+                        <i className="bi bi-person-fill"></i> First Name:
                     </label>
                     <input
                         type="text"
@@ -87,7 +88,7 @@ const EditStudent = () => {
                 </div>
                 <div className="mb-3">
                     <label htmlFor="last_name" className="form-label">
-                        <i className="bi bi-person"></i> Last Name:
+                        <i className="bi bi-person-fill"></i> Last Name:
                     </label>
                     <input
                         type="text"

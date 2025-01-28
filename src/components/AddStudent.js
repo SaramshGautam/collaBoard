@@ -43,12 +43,14 @@ const AddStudent = ({ className }) => {
   };
 
   return (
-    <div className="container mt-2">
-      <h1 className="mb-4"><i className="bi bi-person-plus-fill"></i> Add New Student</h1>
+<div className="container mt-2">
+  <h1 className="fw-bold mb-4 fs-4">
+    <i className="bi bi-person-plus-fill me-2"></i> Add New Student
+  </h1>
 
       <form onSubmit={handleSubmit}>
         <div className="mb-3">
-          <label htmlFor="first_name" className="form-label"><i className="bi bi-person"></i> First Name</label>
+          <label htmlFor="first_name" className="form-label"><i className="bi bi-person-fill"></i> First Name</label>
           <input
             type="text"
             name="first_name"
@@ -60,7 +62,7 @@ const AddStudent = ({ className }) => {
           />
         </div>
         <div className="mb-3">
-          <label htmlFor="last_name" className="form-label"><i className="bi bi-person"></i> Last Name</label>
+          <label htmlFor="last_name" className="form-label"><i className="bi bi-person-fill"></i> Last Name</label>
           <input
             type="text"
             name="last_name"
@@ -84,7 +86,7 @@ const AddStudent = ({ className }) => {
           />
         </div>
         <div className="mb-3">
-          <label htmlFor="lsu_id" className="form-label"><i className="bi bi-id-card"></i> LSU ID</label>
+          <label htmlFor="lsu_id" className="form-label"><i className="bi bi-card-text"></i> LSU ID</label>
           <input
             type="text"
             name="lsu_id"

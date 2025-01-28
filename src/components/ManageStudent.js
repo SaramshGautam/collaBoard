@@ -38,10 +38,12 @@ const ManageStudent = () => {
     };
 
     return (
-        <div className="container mt-2">
-            <h1 className="mb-4">
-                Manage Students for Classroom: <span className="text-dark">{className}</span>
-            </h1>
+<div className="container mt-2">
+  <h1 className="classroom-heading fw-bold mb-4 fs-4">
+    Manage Students for Classroom: <span className="text-dark">{className}</span>
+  </h1>
+
+
 
             {/* Add Student Button */}
             <button
