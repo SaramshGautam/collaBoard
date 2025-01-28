@@ -21,6 +21,34 @@
   font-weight: bold;
 } */
 
+/* Adjusted styles for smaller headings */
+.dashboard-title {
+  font-size: 1.5rem; /* Smaller size for "Student's Dashboard" */
+  font-weight: 600;
+  color: #0d0d0d;
+  margin-bottom: 10px;
+}
+
+.assigned-classrooms-title {
+  font-size: 1.25rem; /* Smaller size for "Assigned Classrooms" */
+  font-weight: 500;
+  color: #070707;
+  margin-bottom: 8px;
+}
+
+/* Adjust Classroom heading size */
+.classroom-heading {
+  font-size: 1.5rem; /* Adjust size as needed */
+  font-weight: bold;
+}
+
+/* Adjust Project heading size */
+.project-heading {
+  font-size: 1.25rem; /* Adjust size as needed */
+  font-weight: 600;
+}
+
+
 .commentsTitle {
   padding: 0px;
   margin: 0px;
@@ -384,4 +412,108 @@
 .no-students {
   font-style: italic;
   color: gray;
+}/* Wrapper for the entire content of Manage Teams */
+.manage-teams-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px;
+  width: 100%;
+}
+
+/* Center the header */
+.manage-teams-wrapper h1 {
+  text-align: center;
+  margin-bottom: 20px;
+  font-size: 28px;
+  font-weight: bold;
+}
+
+/* Main container layout for Unassigned Students and Teams */
+.manage-teams-container {
+  display: flex;
+  flex-wrap: wrap; /* Allow wrapping of teams */
+  width: 100%;
+  height: 70vh; /* Adjust as necessary for the height */
+  margin-top: 20px;
+  gap: 20px; /* Space between sections */
+}
+
+/* Unassigned Students section */
+.manage-unassigned-students {
+  flex: 0 0 25%; /* Increased width for Unassigned Students */
+  max-width: 350px; /* Optional: limit width */
+  height: 100%;
+  overflow-y: auto; /* Scrollable if content exceeds height */
+  border-right: 1px solid #ccc;
+  padding: 10px;
+  background-color: #f8f9fa;
+}
+
+.manage-student-list {
+  list-style: none;
+  padding: 0;
+}
+
+.manage-student-item {
+  padding: 8px;
+  margin: 5px 0;
+  background: #e9ecef;
+  border-radius: 5px;
+  cursor: grab;
+}
+
+.manage-student-item:hover {
+  background: #dee2e6;
+}
+
+.manage-no-students {
+  text-align: center;
+  font-style: italic;
+  color: #6c757d;
+}
+
+/* Teams container */
+.manage-teams-list {
+  flex: 1 1 60%; /* Take remaining space and allow it to grow */
+  height: 100%;
+  overflow-y: auto; /* Scrollable if needed */
+  padding: 10px;
+  display: flex;
+  flex-wrap: wrap; /* Allow teams to wrap and go to next line */
+  gap: 20px; /* Space between teams */
+  background-color: #ffffff;
+}
+
+/* Individual team section */
+.manage-team-list {
+  flex: 0 0 45%; /* Set the width of each team */
+  min-height: 100px; /* Minimum height for teams */
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  background-color: #f8f9fa;
+  box-sizing: border-box;
+}
+
+.manage-team-list h4 {
+  text-align: center;
+  font-size: 18px;
+  margin-bottom: 10px;
+}
+
+.manage-team-list .manage-student-list {
+  list-style: none;
+  padding: 0;
+}
+
+.manage-team-list .manage-student-item {
+  padding: 8px;
+  margin: 5px 0;
+  background: #e9ecef;
+  border-radius: 5px;
+}
+
+.manage-team-list .manage-student-item button {
+  float: right;
 }

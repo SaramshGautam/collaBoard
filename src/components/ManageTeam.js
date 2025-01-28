@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { getFirestore, collection, getDocs } from 'firebase/firestore';
 
 const ManageTeams = () => {
   const { className, projectName } = useParams();
+  const navigate = useNavigate();
   const [teamName, setTeamName] = useState('');
   const [students, setStudents] = useState([]);
   const [teams, setTeams] = useState([]);
@@ -18,18 +19,21 @@ const ManageTeams = () => {
         const studentsSnapshot = await getDocs(studentsRef);
         const studentsList = studentsSnapshot.docs.map(doc => ({
           email: doc.id,
-          name: `${doc.data().firstName} ${doc.data().lastName}`,
+          name: `${doc.data()?.firstName || ''} ${doc.data()?.lastName || ''}`.trim() || doc.id,
         }));
-        console.log('Fetched students:', studentsList); // Check if names are correct
+        console.log('Fetched students:', studentsList);
   
         // Fetch teams
         const teamsRef = collection(db, 'classrooms', className, 'Projects', projectName, 'teams');
         const teamsSnapshot = await getDocs(teamsRef);
         const teamsList = teamsSnapshot.docs.map(doc => ({
           teamName: doc.id,
-          students: Object.entries(doc.data()).map(([email, name]) => ({ email, name })),
+          students: Object.entries(doc.data()).map(([email, name]) => ({
+            email,
+            name: typeof name === 'string' ? name : email, // Ensure name is a string
+          })),
         }));
-        console.log('Fetched teams:', teamsList); // Check if names are correct
+        console.log('Fetched teams:', teamsList);
   
         // Get a list of all assigned students by email
         const assignedEmails = teamsList.flatMap(team => team.students.map(student => student.email));
@@ -39,15 +43,13 @@ const ManageTeams = () => {
   
         setStudents(unassignedStudents);
         setTeams(teamsList);
-  
       } catch (error) {
         console.error('Error fetching teams or students:', error);
       }
     };
   
     fetchTeamsAndStudents();
-  }, [className, projectName]);
-  
+  }, [className, projectName]);  
 
   const handleCreateTeam = () => {
     if (teamName && !teams.some(team => team.teamName === teamName)) {
@@ -109,7 +111,6 @@ const ManageTeams = () => {
   
 
   const handleRemoveStudent = (email, teamName) => {
-    // Step 1: Remove student from the selected team
     const updatedTeams = teams.map(team => {
       if (team.teamName === teamName) {
         return {
@@ -119,15 +120,13 @@ const ManageTeams = () => {
       }
       return team;
     });
-  
-    // Step 2: Add the student back to the unassigned students list if they're not already there
+
     const studentToRemove = teams
       .flatMap(team => team.students)
       .find(student => student.email === email);
   
     if (studentToRemove) {
       setStudents(prevStudents => {
-        // Prevent duplicate students in the unassigned list
         if (!prevStudents.some(student => student.email === email)) {
           return [...prevStudents, studentToRemove];
         }
@@ -135,12 +134,11 @@ const ManageTeams = () => {
       });
     }
   
-    // Step 3: Update the teams state
     setTeams(updatedTeams);
   };
 
   return (
-    <div className="content-wrapper">
+    <div className="manage-teams-wrapper">
       <h1><i className="bi bi-people-fill"></i> Manage Teams</h1>
 
       <div className="mt-3">
@@ -152,78 +150,73 @@ const ManageTeams = () => {
           onChange={(e) => setTeamName(e.target.value)}
           placeholder="Enter Team Name"
         />
-        <button className="btn btn-secondary" onClick={handleCreateTeam}>
+        <button className="btn btn-dark" onClick={handleCreateTeam}>
           <i className="bi bi-plus-circle"></i> Create Team
         </button>
       </div>
 
-      <div className="mt-4">
-      <div className="mt-4">
-  <div id="unassigned-students-section">
-    <h4>Unassigned Students</h4>
-    <ul className="student-list">
-    {students.length === 0 ? (
-  <li className="no-students">All students assigned</li>
-) : (
-  students.map((student) => (
-    <li
-      key={student.email}
-      className="student-item"
-      draggable
-      onDragStart={(e) => handleDragStart(e, student)}
-    >
-      {student.name ? student.name : student.email}
-    </li>
-  ))
-)}
+      <div className="manage-teams-container">
+        <div className="manage-unassigned-students">
+          <h4>Unassigned Students</h4>
+          <ul className="manage-student-list">
+            {students.length === 0 ? (
+              <li className="manage-no-students">All students assigned</li>
+            ) : (
+              students.map((student) => (
+                <li
+                  key={student.email}
+                  className="manage-student-item"
+                  draggable
+                  onDragStart={(e) => handleDragStart(e, student)}
+                >
+                  {student.name ? student.name : student.email}
+                </li>
+              ))
+            )}
+          </ul>
+        </div>
 
-
-
-    </ul>
-  </div>
-</div>
-
-
-        <div id="teams-container">
+        <div className="manage-teams-list">
           {teams.map((team) => (
             <div
               key={team.teamName}
-              className="team-list"
+              className="manage-team-list"
               onDrop={(e) => handleDrop(e, team.teamName)}
               onDragOver={(e) => e.preventDefault()}
             >
               <h4>{team.teamName}</h4>
-              <ul className="student-list">
-              {team.students.length === 0 ? (
-  <li className="no-students">No students assigned</li>
-) : (
-  team.students.map((student) => (
-    <li key={student.email} className="student-item">
-      {student.name ? student.name : student.email}
-      <button
-        className="btn btn-danger btn-sm ml-2"
-        onClick={() => handleRemoveStudent(student.email, team.teamName)}
-      >
-        Remove
-      </button>
-    </li>
-  ))
-)}
-
-
-
+              <ul className="manage-student-list">
+                {team.students.length === 0 ? (
+                  <li className="manage-no-students">No students assigned</li>
+                ) : (
+                  team.students.map((student) => (
+                    <li key={student.email} className="manage-student-item">
+                      {student.name ? student.name : student.email}
+                      <button
+                        className="btn btn-danger btn-sm ml-2"
+                        onClick={() => handleRemoveStudent(student.email, team.teamName)}
+                      >
+                        Remove
+                      </button>
+                    </li>
+                  ))
+                )}
               </ul>
             </div>
           ))}
         </div>
       </div>
 
-      <button className="btn btn-secondary mt-3" onClick={handleSaveChanges}>
+      <button className="btn btn-dark" onClick={handleSaveChanges}>
         <i className="bi bi-save"></i> Save Changes
       </button>
-      <Link to={`/classroom/${className}/project/${projectName}`} className="btn btn-secondary back-btn mt-4">
-        <i className="bi bi-arrow-left me-2"></i> Back to Project
-      </Link>
+      <button
+            type="button"
+            className="btn btn-dark"
+            onClick={() => navigate(`/classroom/${className}/project/${projectName}`)}
+          >
+            <i className="bi bi-arrow-left me-2"></i> Back to Project
+          </button>
     </div>
   );
 };

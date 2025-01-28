@@ -13,6 +13,7 @@
   right: 0;
   height: 60px; /* Adjust navbar height */
 }
+
 /* Add this to your main content or container class to avoid overlap */
 body {
   padding-top: 60px; /* Adjust this value to the height of your navbar */
@@ -22,7 +23,6 @@ body {
 .content-wrapper {
   padding-top: 60px; /* Add padding to the content */
 }
-
 
 .navbar-left {
   display: flex;
@@ -57,35 +57,32 @@ body {
   align-items: center;
 }
 
-.profile-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  border: 2px solid white;
+/* Dropdown toggle */
+.nav-item.dropdown .nav-link.dropdown-toggle {
   cursor: pointer;
   display: flex;
   align-items: center;
-  justify-content: center;
 }
 
-.profile-icon:hover {
-  transform: scale(1.1);
-  border-color: #d3d3d3;
+/* Profile icon */
+.bi-person {
+  font-size: 24px;
+  color: white;
 }
 
 /* Profile dropdown menu (Bootstrap style) */
-.profile-dropdown {
+.dropdown-menu {
   display: none;
   position: absolute;
   top: 60px;
   right: 20px;
-  background-color: #333; /* Ash background for dropdown */
+  background-color: #000000; /* Ash background for dropdown */
   border-radius: 5px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
   z-index: 1001;
 }
 
-.profile-dropdown .dropdown-item {
+.dropdown-menu .dropdown-item {
   color: white;
   font-size: 1rem;
   padding: 10px 20px;
@@ -93,21 +90,21 @@ body {
   align-items: center;
 }
 
-.profile-dropdown .dropdown-item i {
+.dropdown-menu .dropdown-item i {
   font-size: 18px;
 }
 
-.profile-dropdown .dropdown-item:hover {
-  background-color: #555; /* Slightly lighter ash color */
+.dropdown-menu .dropdown-item:hover {
+  background-color: #030303; /* Slightly lighter ash color */
 }
 
 /* Show the dropdown when active */
-.profile-dropdown.show {
+.dropdown-menu.show {
   display: block;
 }
 
-/* Improved logout button */
-.profile-dropdown .dropdown-item {
+/* Improved logout button styled like the 'Add Classroom' button */
+.dropdown-menu .dropdown-item {
   font-weight: 600;
   background-color: transparent;
   border: none;
@@ -115,7 +112,14 @@ body {
   transition: background-color 0.3s ease;
 }
 
-.profile-dropdown .dropdown-item:hover {
-  background-color: #222; /* Darker hover effect */
+/* Use the btn-dark for the logout button */
+.dropdown-menu .btn-sm {
+  font-size: 0.875rem; /* Smaller size */
+  padding: 5px 10px; /* Adjust the padding to make it smaller */
+  width: auto; /* Ensure the button doesn't stretch */
+}
+
+.dropdown-menu .dropdown-item:hover {
+  background-color: #000000; /* Darker hover effect */
   color: #f1f1f1; /* Lighter text on hover */
 }
