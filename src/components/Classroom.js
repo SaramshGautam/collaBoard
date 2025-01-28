@@ -41,9 +41,6 @@ const Classroom = () => {
     navigate(`/classroom/${className}/manage-students`);
   };
   
-  const handleProjectClick = (projectName) => {
-    navigate(`/classroom/${className}/project/${projectName}`);
-  };
   
   const handleBackToDashboard = () => {
     if (role === 'teacher') {
@@ -55,7 +52,7 @@ const Classroom = () => {
 
   return (
     <div className="container mt-2 pt-2">
-      <h1 className="mb-4">Classroom: <span className="text-dark">{className}</span></h1>
+      <h1 className="classroom-heading mb-4">Classroom: <span className="text-dark">{className}</span></h1>
 
       {role === 'teacher' && (
         <div className="d-flex gap-3 mb-4">
@@ -68,17 +65,17 @@ const Classroom = () => {
         </div>
       )}
 
-      <h2 className="section-title mb-3"><i className="bi bi-folder2"></i> Projects</h2>
+      <h2 className="project-heading section-title mb-3"><i className="bi bi-folder2"></i> Projects</h2>
       {loading ? (
         <p>Loading projects...</p>
       ) : (
         <ul className="list-group">
           {projects.length > 0 ? (
             projects.map((projectName, index) => (
-              <li key={index} className="list-group-item d-flex justify-content-between align-items-center">
-                <button className="text-dark d-flex align-items-center" onClick={() => handleProjectClick(projectName)}>
-                  <i className="bi bi-file-earmark-text me-2"></i> {projectName}
-                </button>
+              <li key={index} className="list-group-item">
+            <a href={`/classroom/${className}/project/${projectName}`} className="text-dark d-flex align-items-center">
+              {projectName}
+            </a>
               </li>
             ))
           ) : (
