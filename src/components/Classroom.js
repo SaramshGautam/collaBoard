@@ -3,26 +3,40 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { getFirestore, collection, getDocs } from 'firebase/firestore';
 
 const Classroom = () => {
-  const { className } = useParams(); // Get the class name from URL params
+  const { className } = useParams(); 
   const navigate = useNavigate();
   const [projects, setProjects] = useState([]);
-  const [role, setRole] = useState(localStorage.getItem('role')); // Get role from localStorage
-  const [userEmail, setUserEmail] = useState(localStorage.getItem('userEmail')); // Get role from localStorage
+  const [role] = useState(localStorage.getItem('role')); 
+  const [userEmail] = useState(localStorage.getItem('userEmail')); 
   const db = getFirestore();
   const [loading, setLoading] = useState(true);
+  const [courseDetails, setCourseDetails] = useState({});  // Store course details (course name, course ID)
 
   useEffect(() => {
     const fetchClassroomData = async () => {
       try {
-        // Get projects for the classroom
-        const projectsRef = collection(db, 'classrooms', className, 'Projects'); // Use 'Projects' with correct case
+        // Fetch course details like course ID and course name
+        const courseRef = collection(db, 'classrooms');
+        const courseSnapshot = await getDocs(courseRef);
+        const courseData = courseSnapshot.docs.find(doc => doc.id === className)?.data();
+        
+        // Set course details
+        if (courseData) {
+          setCourseDetails({
+            courseId: courseData.courseID,
+            courseName: courseData.class_name,
+          });
+        }
+
+        // Fetch projects for the classroom
+        const projectsRef = collection(db, 'classrooms', className, 'Projects'); 
         const querySnapshot = await getDocs(projectsRef);
-        const projectsData = querySnapshot.docs.map(doc => doc.data().projectName);
-    
-        console.log("User Role:", role);
-        console.log("User Email:", userEmail);
-        console.log("Fetched Projects Data:", projectsData);
-    
+        const projectsData = querySnapshot.docs.map(doc => ({
+          projectName: doc.data().projectName,
+          description: doc.data().description,
+          dueDate: doc.data().dueDate,
+        }));
+
         setProjects(projectsData);
         setLoading(false);
       } catch (error) {
@@ -32,63 +46,51 @@ const Classroom = () => {
   
     fetchClassroomData();
   }, [className, db]);
-  
-  const handleAddProject = () => {
-    navigate(`/classroom/${className}/add-project`);
-  };
-  
-  const handleManageStudents = () => {
-    navigate(`/classroom/${className}/manage-students`);
-  };
-  
-  
-  const handleBackToDashboard = () => {
-    if (role === 'teacher') {
-      navigate('/teachers-home');
-    } else if (role === 'student') {
-      navigate('/students-home');
-    }
-  };
 
   return (
-    <div className="container mt-2 pt-2">
-      <h1 className="classroom-heading mb-4">Classroom: <span className="text-dark">{className}</span></h1>
-
+    <div className="classroom-page">
+      <h1 className="classroom-title">{courseDetails.courseName} ({courseDetails.courseId})</h1>
+  
       {role === 'teacher' && (
-        <div className="d-flex gap-3 mb-4">
-          <button className="btn btn-dark" onClick={handleAddProject}>
-            <i className="bi bi-folder-plus me-2"></i> Add Project
-          </button>
-          <button className="btn btn-dark" onClick={handleManageStudents}>
-            <i className="bi bi-people me-2"></i> Manage Students
-          </button>
-        </div>
+        <div className="button-group">
+        <button className="btn action-btn" onClick={() => navigate(`/classroom/${className}/add-project`)}>
+          <i className="bi bi-folder-plus me-2"></i> Add Project
+        </button>
+        <button className="btn action-btn" onClick={() => navigate(`/classroom/${className}/manage-students`)}>
+          <i className="bi bi-people me-2"></i> Manage Students
+        </button>
+        <button className="btn action-btn" onClick={() => navigate(`/classroom/${className}/edit`)}>
+          <i className="bi bi-pencil-square me-2"></i> Edit Classroom
+        </button>
+      </div>
+      
       )}
-
-      <h2 className="project-heading section-title mb-3"><i className="bi bi-folder2"></i> Projects</h2>
+  
+      <h2 className="section-title">Projects</h2>
+  
       {loading ? (
         <p>Loading projects...</p>
       ) : (
-        <ul className="list-group">
+        <div className="projects-grid">
           {projects.length > 0 ? (
-            projects.map((projectName, index) => (
-              <li key={index} className="list-group-item">
-            <a href={`/classroom/${className}/project/${projectName}`} className="text-dark d-flex align-items-center">
-              {projectName}
-            </a>
-              </li>
+            projects.map((project, index) => (
+              <div key={index} className="project-card" onClick={() => navigate(`/classroom/${className}/project/${project.projectName}`)}>
+                <h5>{project.projectName}</h5>
+                <p className="project-description"><strong>Description:</strong> {project.description}</p>
+                <p className="project-due-date"><strong>Due Date:</strong> {new Date(project.dueDate).toLocaleDateString()}</p>
+              </div>
             ))
           ) : (
-            <li className="list-group-item text-muted">No projects available.</li>
+            <p className="text-muted">No projects available.</p>
           )}
-        </ul>
+        </div>
       )}
-
-      <button className="btn btn-dark mt-3" onClick={handleBackToDashboard}>
+  
+      <button className="btn back-btn mt-3" onClick={() => navigate(role === 'teacher' ? '/teachers-home' : '/students-home')}>
         <i className="bi bi-arrow-left"></i> Back to Dashboard
       </button>
     </div>
   );
-};
+};  
 
 export default Classroom;
