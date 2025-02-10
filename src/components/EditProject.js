@@ -5,24 +5,22 @@ const EditProject = () => {
   const { className, projectName } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
-  
-  // Use the passed project details from location state (if available)
+
   const initialProjectDetails = location.state?.projectDetails || {
     description: '',
     dueDate: '',
   };
 
-  // Format the dueDate if necessary
   const formatDateForInput = (date) => {
     if (!date) return '';
     const d = new Date(date);
-    return d.toISOString().slice(0, 16); // Format to YYYY-MM-DDTHH:MM
+    return d.toISOString().slice(0, 16);
   };
 
   const [formData, setFormData] = useState({
     projectName: projectName || '',
     description: initialProjectDetails.description,
-    dueDate: formatDateForInput(initialProjectDetails.dueDate), // Ensure correct format
+    dueDate: formatDateForInput(initialProjectDetails.dueDate),
     teamFile: null,
   });
 
@@ -62,15 +60,36 @@ const EditProject = () => {
       });
   };
 
+  // **Delete Project Function**
+  const handleDelete = async () => {
+    const confirmDelete = window.confirm(
+      "Are you sure you want to delete this project? This action cannot be undone."
+    );
+    if (!confirmDelete) return;
+  
+    try {
+      const response = await fetch(`/api/classroom/${className}/project/${projectName}/delete`, {
+        method: 'DELETE',
+      });
+  
+      if (response.ok) {
+        navigate(`/classroom/${className}`); // Navigate back to the classroom after deletion
+      } else {
+        alert('Failed to delete project. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error deleting project:', error);
+      alert('An error occurred while deleting the project.');
+    }
+  };  
+
   return (
-    <div className="container mt-2">
-      <h1 className="mb-4">Edit Project</h1>
+    <div className="container form-container mt-4">
+      <h1 className="form-title">Edit Project</h1>
 
       <form onSubmit={handleSubmit} encType="multipart/form-data">
         <div className="mb-3">
-          <label htmlFor="projectName" className="form-label">
-            <i className="bi bi-card-text"></i> Project Name
-          </label>
+          <label htmlFor="projectName" className="form-label">Project Name</label>
           <input
             type="text"
             id="projectName"
@@ -83,9 +102,7 @@ const EditProject = () => {
         </div>
 
         <div className="mb-3">
-          <label htmlFor="description" className="form-label">
-            <i className="bi bi-pencil-square"></i> Project Description
-          </label>
+          <label htmlFor="description" className="form-label">Project Description</label>
           <textarea
             id="description"
             name="description"
@@ -98,9 +115,7 @@ const EditProject = () => {
         </div>
 
         <div className="mb-3">
-          <label htmlFor="dueDate" className="form-label">
-            <i className="bi bi-calendar-event"></i> Due Date
-          </label>
+          <label htmlFor="dueDate" className="form-label">Due Date</label>
           <input
             type="datetime-local"
             id="dueDate"
@@ -113,9 +128,7 @@ const EditProject = () => {
         </div>
 
         <div className="mb-3">
-          <label htmlFor="teamFile" className="form-label">
-            <i className="bi bi-file-earmark-spreadsheet"></i> Upload Team File (CSV/Excel)
-          </label>
+          <label htmlFor="teamFile" className="form-label">Upload Team File (CSV/Excel) (Optional)</label>
           <input
             type="file"
             id="teamFile"
@@ -125,16 +138,23 @@ const EditProject = () => {
           />
         </div>
 
-        <div className="d-flex justify-content-start gap-2">
-          <button type="submit" className="btn btn-dark">
-            <i className="bi bi-save"></i> Save Changes
+        <div className="d-flex justify-content-start gap-3">
+          <button type="submit" className="btn action-btn">
+            <i className="bi bi-save"></i> Update
           </button>
           <button
             type="button"
-            className="btn btn-dark"
+            className="btn back-btn" 
             onClick={() => navigate(`/classroom/${className}/project/${projectName}`)}
           >
-            <i className="bi bi-arrow-left me-2"></i> Back to Project
+            <i className="bi bi-arrow-left"></i> Back to Project
+          </button>
+          <button
+            type="button"
+            className="btn delete-btn"
+            onClick={handleDelete}
+          >
+            <i className="bi bi-trash"></i> Delete Project
           </button>
         </div>
       </form>
