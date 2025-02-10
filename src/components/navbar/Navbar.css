@@ -4,7 +4,7 @@
   justify-content: space-between;
   align-items: center;
   padding: 10px 20px;
-  background-color: #000000; /* Ash background */
+  background-color: rgb(52, 58, 64);
   color: white;
   z-index: 1000;
   position: fixed;
@@ -13,7 +13,6 @@
   right: 0;
   height: 60px; /* Adjust navbar height */
 }
-
 /* Add this to your main content or container class to avoid overlap */
 body {
   padding-top: 60px; /* Adjust this value to the height of your navbar */
@@ -112,14 +111,18 @@ body {
   transition: background-color 0.3s ease;
 }
 
+.dropdown-menu {
+  background-color: rgb(52,58,64,255);/* Slate Blue */
+}
+
+.dropdown-menu .dropdown-item:hover {
+  background-color: rgb(52,58,64,255); /* Darker Slate Blue */
+}
+
+
 /* Use the btn-dark for the logout button */
 .dropdown-menu .btn-sm {
   font-size: 0.875rem; /* Smaller size */
   padding: 5px 10px; /* Adjust the padding to make it smaller */
   width: auto; /* Ensure the button doesn't stretch */
-}
-
-.dropdown-menu .dropdown-item:hover {
-  background-color: #000000; /* Darker hover effect */
-  color: #f1f1f1; /* Lighter text on hover */
 }
