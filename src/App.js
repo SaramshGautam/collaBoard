@@ -15,7 +15,10 @@ import Project from './components/Project';
 import EditProject from './components/EditProject';
 import EditStudent from './components/EditStudent';
 import ManageStudent from './components/ManageStudent'; 
+import EditClassroom from './components/EditClassroom'; 
 import Team from './components/Team';
+import "./style.css";
+
 // Firebase imports
 import { initializeApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
@@ -162,10 +165,13 @@ const App = () => {
   <Route path="/classroom/:className/project/:projectName" element={<><Navbar /><Project /></>} />
   <Route path="/classroom/:className/project/:projectName/edit" element={<><Navbar /><EditProject /></>} />
   <Route path="/classroom/:className/project/:projectName/team/:teamName" element={<><Navbar /><Team /></>} />
+  <Route path="/classroom/:className/edit" element={<><Navbar /><EditClassroom /></>} />
+
   
   {/* Manage Students */}
   <Route path="/classroom/:className/manage-students" element={<><Navbar /><ManageStudent /></>} />
   <Route path="/classroom/:className/manage-students/:studentId/edit" element={<><Navbar /><EditStudent /></>} />
+  <Route path="/classroom/:className/manage-students/add-student" element={<><Navbar /><AddStudent /></>} />
   <Route path="/classroom/:className/project/:projectName/manage-teams" element={<><Navbar /><ManageTeams /></>} />
 
   {/* Add Classroom */}
