@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 
-const AddStudent = ({ className }) => {
+const AddStudent = () => {
+  const { className } = useParams(); 
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
@@ -43,14 +44,16 @@ const AddStudent = ({ className }) => {
   };
 
   return (
-<div className="container mt-2">
-  <h1 className="fw-bold mb-4 fs-4">
-    <i className="bi bi-person-plus-fill me-2"></i> Add New Student
-  </h1>
+    <div className="container form-container mt-4">
+      <h1 className="form-title fw-bold mb-4 fs-4">
+        <i className="bi bi-person-plus-fill me-2"></i> Add New Student
+      </h1>
 
       <form onSubmit={handleSubmit}>
         <div className="mb-3">
-          <label htmlFor="first_name" className="form-label"><i className="bi bi-person-fill"></i> First Name</label>
+          <label htmlFor="first_name" className="form-label">
+            <i className="bi bi-person-fill"></i> First Name
+          </label>
           <input
             type="text"
             name="first_name"
@@ -62,7 +65,9 @@ const AddStudent = ({ className }) => {
           />
         </div>
         <div className="mb-3">
-          <label htmlFor="last_name" className="form-label"><i className="bi bi-person-fill"></i> Last Name</label>
+          <label htmlFor="last_name" className="form-label">
+            <i className="bi bi-person-fill"></i> Last Name
+          </label>
           <input
             type="text"
             name="last_name"
@@ -74,7 +79,9 @@ const AddStudent = ({ className }) => {
           />
         </div>
         <div className="mb-3">
-          <label htmlFor="email" className="form-label"><i className="bi bi-envelope"></i> Email</label>
+          <label htmlFor="email" className="form-label">
+            <i className="bi bi-envelope"></i> Email
+          </label>
           <input
             type="email"
             name="email"
@@ -86,7 +93,9 @@ const AddStudent = ({ className }) => {
           />
         </div>
         <div className="mb-3">
-          <label htmlFor="lsu_id" className="form-label"><i className="bi bi-card-text"></i> LSU ID</label>
+          <label htmlFor="lsu_id" className="form-label">
+            <i className="bi bi-card-text"></i> LSU ID
+          </label>
           <input
             type="text"
             name="lsu_id"
@@ -97,8 +106,8 @@ const AddStudent = ({ className }) => {
             onChange={handleLsuIdChange}  // Handling LSU ID change
           />
         </div>
-        <div className="d-flex justify-content-start gap-2">
-          <button type="submit" className="btn btn-dark" disabled={isSubmitting}>
+        <div className="d-flex justify-content-start gap-3 mt-4">
+          <button type="submit" className="btn action-btn" disabled={isSubmitting}>
             {isSubmitting ? (
               <span className="spinner-border spinner-border-sm" aria-hidden="true"></span>
             ) : (
@@ -106,9 +115,7 @@ const AddStudent = ({ className }) => {
             )}
             <span>{isSubmitting ? 'Adding...' : 'Add Student'}</span>
           </button>
-          <button
-            type="button"
-            className="btn btn-secondary"
+          <button type="button" className="btn back-btn" 
             onClick={handleBackClick} >
             <i className="bi bi-arrow-left"></i> Back to Manage Students
           </button>
