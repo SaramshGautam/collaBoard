@@ -5,105 +5,128 @@ import axios from "axios";
 const AddClassroom = () => {
   const navigate = useNavigate();
   const [className, setClassName] = useState("");
+  const [courseId, setCourseId] = useState("");
+  const [semester, setSemester] = useState("");
   const [studentFile, setStudentFile] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState("");  // State to handle errors
-  const [role, setRole] = useState(localStorage.getItem('role')); // Get role from localStorage
-  const [userEmail, setUserEmail] = useState(localStorage.getItem('userEmail')); // Get role from localStorage
+  const [error, setError] = useState("");
+  const [role] = useState(localStorage.getItem("role"));
+  const [userEmail] = useState(localStorage.getItem("userEmail"));
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      const fileExtension = file.name.slice(file.name.lastIndexOf('.')).toLowerCase();  // Get file extension
-      if (!['.csv', '.xls', '.xlsx'].includes(fileExtension)) {
+      const fileExtension = file.name.slice(file.name.lastIndexOf(".")).toLowerCase();
+      if (![".csv", ".xls", ".xlsx"].includes(fileExtension)) {
         setError("Invalid file format. Please upload a CSV or Excel file.");
-        setStudentFile(null);  // Reset the file if invalid format
+        setStudentFile(null);
       } else {
-        setError("");  // Clear any error if the file is valid
+        setError("");
         setStudentFile(file);
       }
     }
   };
-  
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!className || !studentFile) {
-        setError("Please provide a class name and upload a valid file.");
-        return;
+    if (!className || !courseId || !semester || !studentFile) {
+      setError("Please provide all required details.");
+      return;
     }
 
     const formData = new FormData();
     formData.append("class_name", className);
+    formData.append("course_id", courseId);
+    formData.append("semester", semester);
     formData.append("student_file", studentFile);
-
-    // Append role and user email to the form data
     formData.append("role", role);
     formData.append("userEmail", userEmail);
 
     try {
-        setIsSubmitting(true);
-        const response = await axios.post("http://localhost:5000/addclassroom", formData, {
-            withCredentials: true, 
-            headers: {
-                "Content-Type": "multipart/form-data",
-            },
-        });
-        console.log("Classroom added:", response.data);
-        setIsSubmitting(false);
-        navigate("/teachers-home");
+      setIsSubmitting(true);
+      await axios.post("http://localhost:5000/addclassroom", formData, {
+        withCredentials: true,
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      setIsSubmitting(false);
+      navigate("/teachers-home");
     } catch (error) {
-        console.error("Error uploading classroom:", error.response?.data || error.message);
-        setError("Failed to upload classroom. Please try again.");
-        setIsSubmitting(false);
+      setError("Failed to upload classroom. Please try again.");
+      setIsSubmitting(false);
     }
-};
-
+  };
 
   return (
-<div className="container mt-2">
-  <h1 className="classroom-heading fw-bold mb-4 fs-4">Add New Classroom</h1>
+    <div className="container mt-4 d-flex justify-content-center">
+  <div className="form-container">
+    <h1 className="form-title">Add New Classroom</h1>
 
 
-      {error && <div className="alert alert-danger">{error}</div>} {/* Display error message */}
+      {error && <div className="alert alert-danger">{error}</div>}
 
       <form onSubmit={handleSubmit} encType="multipart/form-data">
-        <div className="mb-3">
-          <label htmlFor="class_name" className="form-label">
-            <i className="bi bi-book"></i> Class Name
-          </label>
-          <input
-            type="text"
-            id="class_name"
-            name="class_name"
-            className="form-control"
-            value={className}
-            onChange={(e) => setClassName(e.target.value)}
-            required
-          />
-        </div>
+      <div className="row">
+  <div className="col-md-6 form-group">
+    <label htmlFor="class_name" className="form-label">Class Name</label>
+    <input
+      type="text"
+      id="class_name"
+      className="form-control"
+      value={className}
+      onChange={(e) => setClassName(e.target.value)}
+      required
+    />
+  </div>
 
-        <div className="mb-3">
-          <label htmlFor="student_file" className="form-label">
-            <i className="bi bi-file-earmark-spreadsheet"></i> Student File (CSV or Excel)
-          </label>
-          <input
-            type="file"
-            id="student_file"
-            name="student_file"
-            className="form-control"
-            accept=".csv, .xls, .xlsx"
-            onChange={handleFileChange}
-            required
-          />
-        </div>
+  <div className="col-md-6 form-group">
+    <label htmlFor="course_id" className="form-label">Course ID</label>
+    <input
+      type="text"
+      id="course_id"
+      className="form-control"
+      value={courseId}
+      onChange={(e) => setCourseId(e.target.value)}
+      required
+    />
+  </div>
+</div>
 
-        <div className="d-flex justify-content-start gap-2">
-          <button type="submit" className="btn btn-dark" disabled={isSubmitting}>
+<div className="row">
+  <div className="col-md-6 form-group">
+    <label htmlFor="semester" className="form-label">Semester</label>
+    <select
+      id="semester"
+      className="form-control"
+      value={semester}
+      onChange={(e) => setSemester(e.target.value)}
+      required
+    >
+      <option value="">Select Semester</option>
+      <option value="Spring 2025">Spring 2025</option>
+      <option value="Summer 2025">Summer 2025</option>
+      <option value="Fall 2025">Fall 2025</option>
+    </select>
+  </div>
+
+  <div className="col-md-6 form-group">
+    <label htmlFor="student_file" className="form-label">Student File (CSV or Excel)</label>
+    <input
+      type="file"
+      id="student_file"
+      className="form-control"
+      accept=".csv, .xls, .xlsx"
+      onChange={handleFileChange}
+      required
+    />
+  </div>
+</div>
+
+        <div className="d-flex justify-content-start gap-3 mt-4">
+          <button type="submit" className="btn action-btn" disabled={isSubmitting}>
             {isSubmitting ? (
               <>
-                <span className="spinner-border spinner-border-sm" aria-hidden="true"></span>
-                <span>Uploading...</span>
+                <span className="spinner-border spinner-border-sm"></span> Uploading...
               </>
             ) : (
               <>
@@ -111,15 +134,12 @@ const AddClassroom = () => {
               </>
             )}
           </button>
-          <button
-            type="button"
-            className="btn btn-dark"
-            onClick={() => navigate("/teachers-home")}
-          >
+          <button type="button" className="btn back-btn" onClick={() => navigate("/teachers-home")}>
             <i className="bi bi-arrow-left"></i> Back to Home
           </button>
         </div>
       </form>
+    </div>
     </div>
   );
 };
