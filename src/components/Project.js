@@ -7,21 +7,18 @@ const Project = () => {
   const [projectDetails, setProjectDetails] = useState({});
   const [teams, setTeams] = useState([]);
   const [studentTeamAssigned, setStudentTeamAssigned] = useState(null);
-  const [role, setRole] = useState(localStorage.getItem('role')); // Role from local storage
-  const [LSUID, setLSUID] = useState(localStorage.getItem('LSUID')); // LSUID from local storage
+  const [role, setRole] = useState(localStorage.getItem('role'));
   const navigate = useNavigate();
 
   useEffect(() => {
     const fetchProjectDetails = async () => {
-      console.log('Fetching project details and teams...');
       try {
         const db = getFirestore();
-   
+    
         // Fetch project details
         const projectRef = doc(db, 'classrooms', className, 'Projects', projectName);
         const projectDoc = await getDoc(projectRef);
-        console.log('Project document:', projectDoc);
-   
+    
         if (projectDoc.exists()) {
           const projectData = projectDoc.data();
           const dueDate = projectData.dueDate
@@ -33,142 +30,130 @@ const Project = () => {
             description: projectData.description || 'No description provided.',
             dueDate,
           });
-          console.log('Project details fetched:', projectData);
         }
-   
+    
         // Fetch teams
         const teamsRef = collection(db, 'classrooms', className, 'Projects', projectName, 'teams');
         const teamsSnapshot = await getDocs(teamsRef);
-        console.log('Teams snapshot:', teamsSnapshot);
-   
+    
         const teamsData = [];
         teamsSnapshot.forEach((teamDoc) => {
-          const teamMembers = Object.keys(teamDoc.data());
+          const teamData = teamDoc.data();
+          console.log(`Raw Team Data for ${teamDoc.id}:`, teamData);
+    
+          const teamMembers = Object.keys(teamData); // Extract LSUIDs as keys
           teamsData.push({
             name: teamDoc.id,
-            members: teamMembers, // Storing LSUIDs as members
+            members: teamMembers,
           });
         });
-   
+    
         setTeams(teamsData);
-        console.log('Teams data:', teamsData);
-   
-        // Check student team assignment
+        console.log('Fetched Teams:', teamsData);
+    
+        // 🔹 Check student team assignment using LSUID instead of email
         if (role === 'student') {
-          const studentLSUID = localStorage.getItem('LSUID');  // Get LSUID from localStorage
-          console.log('Student LSUID:', studentLSUID);
-   
-          // Modify the logic to check LSUID instead of name or email
-          const assignedTeam = teamsData.find((team) =>
-            team.members.includes(studentLSUID)  // Check if LSUID exists in the team's member list
-          );
-   
-          setStudentTeamAssigned(assignedTeam ? assignedTeam.name : null);
-          console.log('Assigned team for student:', assignedTeam ? assignedTeam.name : 'None');
+          const studentLSUID = localStorage.getItem('LSUID'); // Use LSUID now
+          console.log('Retrieved LSUID from localStorage:', studentLSUID);
+    
+          if (studentLSUID) {
+            const assignedTeam = teamsData.find((team) =>
+              team.members.includes(studentLSUID) // Match LSUID, not email
+            );
+    
+            console.log('Assigned Team:', assignedTeam);
+            setStudentTeamAssigned(assignedTeam ? assignedTeam.name : null);
+          } else {
+            console.error('LSUID not found in localStorage.');
+          }
         }
       } catch (error) {
         console.error('Error fetching project details or teams:', error);
       }
-    };
-   
+    };    
+
     fetchProjectDetails();
   }, [className, projectName, role]);
-  
 
   const handleWhiteboardClick = (teamName) => {
-    console.log(`Navigating to whiteboard for team: ${teamName}`);
     navigate(`/whiteboard/${className}/${projectName}/${teamName}`);
   };
 
   const handleManageTeams = () => {
-    console.log('Navigating to manage teams page...');
     navigate(`/classroom/${className}/project/${projectName}/manage-teams`);
   };
 
   const handleEditProjectClick = () => {
-    console.log('Navigating to edit project page...');
     navigate(`/classroom/${className}/project/${projectName}/edit`, {
-      state: { projectDetails }  // Passing the fetched project details here
+      state: { projectDetails },
     });
   };
 
   return (
-    <div className="container project-container mt-2 pt-2">
-      <h1 className="project-title">Project: {projectName}</h1>
+    <>
+      <h1 className="project-title">{projectName}</h1>
       <p><strong>Description:</strong> {projectDetails.description}</p>
       <p><strong>Due Date:</strong> {projectDetails.dueDate}</p>
 
-      {/* Edit Project Button for Teacher */}
+      {/* Buttons for Teachers */}
       {role === 'teacher' && (
-        <button
-          className="btn btn-dark mt-3 me-3"  // 'me-3' adds margin to the right of the button
-          onClick={handleEditProjectClick}
-        >
-          <i className="bi bi-pencil-fill me-2"></i> Edit Project
-        </button>
+        <div className="d-flex gap-3 mt-3">
+          <button className="btn action-btn" onClick={handleEditProjectClick}>
+            <i className="bi bi-pencil-fill me-2"></i> Edit Project
+          </button>
+          <button className="btn action-btn" onClick={handleManageTeams}>
+            <i className="bi bi-people me-2"></i> Manage Teams
+          </button>
+        </div>
       )}
 
-      {/* Manage Teams Button for Teacher */}
-      {role === 'teacher' && (
-        <button
-          className="btn btn-dark mt-3"
-          onClick={handleManageTeams}
-        >
-          <i className="bi bi-people me-2"></i> Manage Teams
-        </button>
-      )}
-
-      <h2 className="teams-header mt-4">List of Teams</h2>
+      <h2 className="teams-header mt-4">Teams</h2>
       {teams.length > 0 ? (
-        <ul className="list-group teams-list">
+        <div className="team-list">
           {role === 'student' ? (
-            // If the user is a student, show only their assigned team
             studentTeamAssigned ? (
-              <li key={studentTeamAssigned} className="list-group-item team-item">
-                <span className="team-name text-dark">
-                  <i className="bi bi-people-fill"></i> {studentTeamAssigned} {/* Team name as plain text */}
+              <div className="team-card">
+                <span className="team-name">
+                  <i className="bi bi-people-fill me-2"></i> {studentTeamAssigned}
                 </span>
-                <Link to={`/classroom/${className}/project/${projectName}/team/${studentTeamAssigned}`} className="team-link text-dark ms-2">
-                  View Team {/* "View Team" as a clickable link */}
-                </Link>
-                <button
-                  className="btn btn-dark btn-sm ms-3"
-                  onClick={() => handleWhiteboardClick(studentTeamAssigned)}
-                >
-                  <i className="bi bi-tv"></i> Open Whiteboard
-                </button>
-              </li>
+                <div className="team-actions">
+                  <Link to={`/classroom/${className}/project/${projectName}/team/${studentTeamAssigned}`} className="btn btn-view">
+                    View Team
+                  </Link>
+                  <button className="btn btn-whiteboard" onClick={() => handleWhiteboardClick(studentTeamAssigned)}>
+                    <i className="bi bi-tv"></i> Whiteboard
+                  </button>
+                </div>
+              </div>
             ) : (
               <p className="no-team-message">You are not assigned to any team.</p>
             )
           ) : (
-            // If the user is a teacher, show the list of all teams
             teams.map((team) => (
-              <li key={team.name} className="list-group-item team-item">
-                <span className="team-name text-dark">
-                  <i className="bi bi-people-fill"></i> {team.name} {/* Team name as plain text */}
+              <div key={team.name} className="team-card">
+                <span className="team-name">
+                  <i className="bi bi-people-fill me-2"></i> {team.name}
                 </span>
-                <Link to={`/classroom/${className}/project/${projectName}/team/${team.name}`} className="team-link text-dark ms-2">
-                  View Team {/* "View Team" as a clickable link */}
-                </Link>
-                <button
-                  className="btn btn-dark btn-sm ms-3"
-                  onClick={() => handleWhiteboardClick(team.name)}
-                >
-                  <i className="bi bi-tv"></i> Open Whiteboard
-                </button>
-              </li>
+                <div className="team-actions">
+                  <Link to={`/classroom/${className}/project/${projectName}/team/${team.name}`} className="btn btn-view">
+                    View Team
+                  </Link>
+                  <button className="btn btn-whiteboard" onClick={() => handleWhiteboardClick(team.name)}>
+                    <i className="bi bi-tv"></i> Whiteboard
+                  </button>
+                </div>
+              </div>
             ))
           )}
-        </ul>
+        </div>
       ) : (
         <p className="no-teams-message">No teams available.</p>
       )}
 
-      <Link to={`/classroom/${className}`} className="btn btn-dark mt-3">
+      <Link to={`/classroom/${className}`} className="btn back-btn" >
         <i className="bi bi-arrow-left me-2"></i> Back to Classroom
       </Link>
-    </div>
+    </>
   );
 };
 
