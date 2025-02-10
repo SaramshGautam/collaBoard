@@ -66,10 +66,10 @@ const EditStudent = () => {
     };
 
     return (
-<div className="container mt-2">
-  <h1 className="fw-bold mb-4 fs-4">
-    Edit Student: {student.firstName} {student.lastName}
-  </h1>
+        <div className="container form-container mt-4">
+            <h1 className="form-title fw-bold mb-4 fs-4">
+                Edit Student: {student.firstName} {student.lastName}
+            </h1>
 
             <form onSubmit={handleSubmit}>
                 <div className="mb-3">
@@ -128,13 +128,13 @@ const EditStudent = () => {
                         required
                     />
                 </div>
-                <div className="d-flex justify-content-start gap-2">
-                    <button type="submit" className="btn btn-dark">
+                <div className="d-flex justify-content-start gap-3 mt-4">
+                    <button type="submit" className="btn form-btn">
                         <i className="bi bi-check-circle"></i> Save Changes
                     </button>
                     <button
                         type="button"
-                        className="btn btn-secondary"
+                        className="btn cancel-btn"
                         onClick={() => navigate(`/classroom/${className}/manage-students`)}
                     >
                         <i className="bi bi-arrow-left"></i> Back to Manage Students
