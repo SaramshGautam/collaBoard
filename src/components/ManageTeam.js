@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { getFirestore, collection, getDocs } from 'firebase/firestore';
+import { doc, deleteDoc } from 'firebase/firestore';
 
 const ManageTeams = () => {
   const { className, projectName } = useParams();
@@ -8,6 +9,7 @@ const ManageTeams = () => {
   const [teamName, setTeamName] = useState('');
   const [students, setStudents] = useState([]);
   const [teams, setTeams] = useState([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     const fetchTeamsAndStudents = async () => {
@@ -28,12 +30,14 @@ const ManageTeams = () => {
         const teamsSnapshot = await getDocs(teamsRef);
         const teamsList = teamsSnapshot.docs.map(doc => ({
           teamName: doc.id,
-          students: Object.entries(doc.data()).map(([email, name]) => ({
-            email,
-            name: typeof name === 'string' ? name : email, // Ensure name is a string
-          })),
-        }));
-        console.log('Fetched teams:', teamsList);
+          students: Object.entries(doc.data()).map(([email, _]) => {
+            const student = studentsList.find(student => student.email === email);
+            return {
+              email,
+              name: student ? student.name : email, 
+            };
+          }),
+        }));        
   
         // Get a list of all assigned students by email
         const assignedEmails = teamsList.flatMap(team => team.students.map(student => student.email));
@@ -97,6 +101,7 @@ const ManageTeams = () => {
     const name = event.dataTransfer.getData('name');
   
     if (email && name) {
+      // Add the student to the selected team
       const updatedTeams = teams.map(team => {
         if (team.teamName === teamName) {
           if (!team.students.some(student => student.email === email)) {
@@ -105,10 +110,40 @@ const ManageTeams = () => {
         }
         return team;
       });
+  
+      // Remove the student from the unassigned list
+      const updatedStudents = students.filter(student => student.email !== email);
+  
+      setStudents(updatedStudents);
       setTeams(updatedTeams);
     }
   };
+
+const handleDeleteTeam = async (teamName) => {
+  // Find the team that is being deleted
+  const teamToDelete = teams.find(team => team.teamName === teamName);
+  const studentsInDeletedTeam = teamToDelete ? teamToDelete.students : [];
+
+  // Remove the deleted team from the teams list in state
+  const updatedTeams = teams.filter(team => team.teamName !== teamName);
+  setTeams(updatedTeams);
+
+  // Add the students from the deleted team back to the unassigned list
+  const updatedStudents = [...students, ...studentsInDeletedTeam];
+  setStudents(updatedStudents);
+
+  // Also delete the team from the Firebase database
+  const db = getFirestore();
+  const teamRef = doc(db, 'classrooms', className, 'Projects', projectName, 'teams', teamName);
   
+  try {
+    await deleteDoc(teamRef);
+    alert(`Team "${teamName}" deleted successfully!`);
+  } catch (error) {
+    console.error("Error deleting team:", error);
+    alert("Error deleting team.");
+  }
+};
 
   const handleRemoveStudent = (email, teamName) => {
     const updatedTeams = teams.map(team => {
@@ -140,21 +175,21 @@ const ManageTeams = () => {
   return (
     <div className="manage-teams-wrapper">
       <h1><i className="bi bi-people-fill"></i> Manage Teams</h1>
-
-      <div className="mt-3">
-        <input
-          type="text"
-          id="team_name"
-          className="form-input"
-          value={teamName}
-          onChange={(e) => setTeamName(e.target.value)}
-          placeholder="Enter Team Name"
-        />
-        <button className="btn btn-dark" onClick={handleCreateTeam}>
-          <i className="bi bi-plus-circle"></i> Create Team
-        </button>
+      <div className="mt-3 d-flex justify-content-between">
+        <div className="d-flex">
+          <input
+            type="text"
+            id="team_name"
+            className="form-input"
+            value={teamName}
+            onChange={(e) => setTeamName(e.target.value)}
+            placeholder="Enter Team Name"
+          />
+          <button className="action-btn" onClick={handleCreateTeam}>
+            <i className="bi bi-plus-circle"></i> Create Team
+          </button>
+        </div>
       </div>
-
       <div className="manage-teams-container">
         <div className="manage-unassigned-students">
           <h4>Unassigned Students</h4>
@@ -169,13 +204,12 @@ const ManageTeams = () => {
                   draggable
                   onDragStart={(e) => handleDragStart(e, student)}
                 >
-                  {student.name ? student.name : student.email}
+                  {student.name}
                 </li>
               ))
             )}
           </ul>
         </div>
-
         <div className="manage-teams-list">
           {teams.map((team) => (
             <div
@@ -184,39 +218,54 @@ const ManageTeams = () => {
               onDrop={(e) => handleDrop(e, team.teamName)}
               onDragOver={(e) => e.preventDefault()}
             >
-              <h4>{team.teamName}</h4>
+              <h4 className="team-header">
+                {team.teamName}
+                <button
+                  className="btn btn-danger btn-sm ml-2"
+                  onClick={() => handleDeleteTeam(team.teamName)}
+                >
+                  Deleted Team
+                </button>
+              </h4>
               <ul className="manage-student-list">
                 {team.students.length === 0 ? (
                   <li className="manage-no-students">No students assigned</li>
                 ) : (
                   team.students.map((student) => (
                     <li key={student.email} className="manage-student-item">
-                      {student.name ? student.name : student.email}
-                      <button
-                        className="btn btn-danger btn-sm ml-2"
-                        onClick={() => handleRemoveStudent(student.email, team.teamName)}
-                      >
-                        Remove
-                      </button>
-                    </li>
+                   {student.name}
+
+                    <button onClick={() => handleRemoveStudent(student.email, team.teamName)}>
+                      <i className="bi bi-x-circle"></i>
+                    </button>
+                  </li>
                   ))
                 )}
               </ul>
             </div>
           ))}
         </div>
-      </div>
-
-      <button className="btn btn-dark" onClick={handleSaveChanges}>
-        <i className="bi bi-save"></i> Save Changes
-      </button>
-      <button
+        <div className="d-flex justify-content-start">
+        <button type="button" className="btn action-btn" onClick={handleSaveChanges} disabled={isSubmitting}>
+          {isSubmitting ? (
+            <>
+              <span className="spinner-border spinner-border-sm"></span> Saving...
+            </>
+          ) : (
+            <>
+              <i className="bi bi-save"></i> Save Changes
+            </>
+          )}
+        </button>
+          <button
             type="button"
-            className="btn btn-dark"
+            className="btn back-btn" 
             onClick={() => navigate(`/classroom/${className}/project/${projectName}`)}
           >
-            <i className="bi bi-arrow-left me-2"></i> Back to Project
+            <i className="bi bi-arrow-left"></i> Back to Project
           </button>
+        </div>
+      </div>
     </div>
   );
 };
