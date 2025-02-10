@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
 
 const AddProject = () => {
-  const { className } = useParams();  // Get classroom name from URL params
+  const { className } = useParams();
   const navigate = useNavigate();
   const [projectName, setProjectName] = useState('');
   const [description, setDescription] = useState('');
@@ -11,57 +11,47 @@ const AddProject = () => {
   const [teamFile, setTeamFile] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
-  const [role, setRole] = useState(localStorage.getItem('role')); // Get role from localStorage
-  const [userEmail, setUserEmail] = useState(localStorage.getItem('userEmail')); // Get role from localStorage
-
+  const [role] = useState(localStorage.getItem('role'));
+  const [userEmail] = useState(localStorage.getItem('userEmail'));
 
   const handleFileChange = (e) => {
     setTeamFile(e.target.files[0]);
   };
 
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsSubmitting(true);
 
-const handleSubmit = async (e) => {
-  e.preventDefault();
-  setIsSubmitting(true);
+    const formData = new FormData();
+    formData.append('project_name', projectName);
+    formData.append('description', description);
+    formData.append('due_date', dueDate);
+    if (teamFile) formData.append('team_file', teamFile);
 
-  // Initialize formData before appending values
-  const formData = new FormData();
-  formData.append('project_name', projectName);
-  formData.append('description', description);
-  formData.append('due_date', dueDate);
-  if (teamFile) formData.append('team_file', teamFile);
+    formData.append("role", role);
+    formData.append("userEmail", userEmail);
 
-  // Append role and user email to the form data
-  formData.append("role", role);
-  formData.append("userEmail", userEmail);
-  
-
-  try {
+    try {
       const response = await axios.post(`http://localhost:5000/api/add_project/${className}`, formData, {
         headers: {
-            'Content-Type': 'multipart/form-data',
-            'Authorization': `Bearer ${role}:${userEmail}`, // Pass role and email in the Authorization header
+          'Content-Type': 'multipart/form-data',
+          'Authorization': `Bearer ${role}:${userEmail}`,
         },
-    });
-    
+      });
 
-      // Success response
       setErrorMessage('');
-      alert(response.data.message); // Show success message
-      navigate(`/classroom/${className}`); // Redirect to classroom page after successful submission
-  } catch (error) {
-      // Error handling
+      alert(response.data.message);
+      navigate(`/classroom/${className}`);
+    } catch (error) {
       setErrorMessage(error.response?.data?.message || 'Something went wrong!');
-  } finally {
+    } finally {
       setIsSubmitting(false);
-  }
-};
-
-
+    }
+  };
 
   return (
-<div className="container mt-2 pt-2">
-  <h1 className="classroom-heading fw-bold mb-4 fs-4">Add New Project</h1>
+    <div className="container form-container mt-4">
+      <h1 className="form-title">Add New Project</h1>
 
       <form onSubmit={handleSubmit} encType="multipart/form-data">
         <div className="mb-3">
@@ -69,7 +59,6 @@ const handleSubmit = async (e) => {
           <input
             type="text"
             id="project_name"
-            name="project_name"
             className="form-control"
             value={projectName}
             onChange={(e) => setProjectName(e.target.value)}
@@ -81,7 +70,6 @@ const handleSubmit = async (e) => {
           <label htmlFor="description" className="form-label">Project Description</label>
           <textarea
             id="description"
-            name="description"
             className="form-control"
             rows="4"
             value={description}
@@ -95,7 +83,6 @@ const handleSubmit = async (e) => {
           <input
             type="datetime-local"
             id="due_date"
-            name="due_date"
             className="form-control"
             value={dueDate}
             onChange={(e) => setDueDate(e.target.value)}
@@ -109,7 +96,6 @@ const handleSubmit = async (e) => {
           <input
             type="file"
             id="team_file"
-            name="team_file"
             className="form-control"
             accept=".csv, .xls, .xlsx"
             onChange={handleFileChange}
@@ -118,28 +104,21 @@ const handleSubmit = async (e) => {
 
         {errorMessage && <div className="alert alert-danger">{errorMessage}</div>}
 
-        <div className="d-flex justify-content-start gap-2">
-  <button type="submit" className="btn btn-dark" disabled={isSubmitting}>
-    {isSubmitting ? (
-      <>
-        <span className="spinner-border spinner-border-sm" aria-hidden="true"></span>
-        <span>Uploading...</span>
-      </>
-    ) : (
-      <>
-        <i className="bi bi-upload"></i> Upload
-      </>
-    )}
-  </button>
-
-          <button
-  type="button"
-  className="btn btn-dark"
-  onClick={() => navigate(`/classroom/${className}`)}
->
-  <i className="bi bi-arrow-left"></i> Back to Classroom
-</button>
-
+        <div className="d-flex justify-content-start gap-3">
+          <button type="submit" className="btn action-btn" disabled={isSubmitting}>
+            {isSubmitting ? (
+              <>
+                <span className="spinner-border spinner-border-sm"></span> Uploading...
+              </>
+            ) : (
+              <>
+                <i className="bi bi-upload"></i> Upload
+              </>
+            )}
+          </button>
+          <button type="button" className="btn back-btn" onClick={() => navigate(`/classroom/${className}`)}>
+            <i className="bi bi-arrow-left"></i> Back to Classroom
+          </button>
         </div>
       </form>
     </div>
