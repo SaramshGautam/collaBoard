@@ -85,7 +85,6 @@ def addclassroom():
     if role != 'teacher': 
         return jsonify({"error": "Access forbidden: User is not a teacher"}), 403
 
-    # Process the file and classroom creation
     if request.method == 'POST':
         class_name = request.form.get('class_name')
         course_id = request.form.get('course_id') 
@@ -113,17 +112,33 @@ def addclassroom():
 
             # Check if required columns are present
             if not {'firstname', 'lastname', 'email', 'lsu_id'}.issubset(df.columns):
+                os.remove(file_path)
                 return jsonify({"error": "File must have columns: firstname, lastname, email, lsu_id."}), 400
 
-            # Create or update classroom document
-            classroom_ref = db.collection('classrooms').document(course_id)  # Use course_id as document ID
+            # --- NEW: Check if the classroom ID (course_id) is unique ---
+            classroom_ref = db.collection('classrooms').document(course_id)
+            if classroom_ref.get().exists:
+                os.remove(file_path)
+                return jsonify({"error": f"Classroom ID '{course_id}' already exists."}), 400
+            # ----------------------------------------------------------------
+
+            # (Optional) Check if a classroom with the same name exists for this teacher
+            existing_classrooms = db.collection('classrooms')\
+                                    .where('teacherEmail', '==', user_email)\
+                                    .where('class_name', '==', class_name)\
+                                    .get()
+            if len(existing_classrooms) > 0:
+                os.remove(file_path)
+                return jsonify({"error": f"Classroom '{class_name}' already exists."}), 400
+
+            # Create classroom document using course_id as document ID
             classroom_ref.set({
                 'classID': course_id, 
                 'courseID': course_id,  
                 'semester': semester,   
                 'class_name': class_name, 
                 'teacherEmail': user_email
-            })  # Save classroom metadata
+            })
 
             # Add students to Firestore
             for _, row in df.iterrows():
@@ -138,10 +153,10 @@ def addclassroom():
                     'assignedAt': firestore.SERVER_TIMESTAMP
                 }
 
-                # **Use student_email as the document ID**
+                # Use student_email as the document ID in the 'students' subcollection
                 classroom_ref.collection('students').document(student_email).set(student_data)
 
-                # Check if user exists, if not, create a new one
+                # Check if user exists; if not, create a new user document
                 user_doc = db.collection('users').document(student_email)
                 if not user_doc.get().exists:
                     user_doc.set({
@@ -209,12 +224,14 @@ def manage_students(classID):
             students.append({
                 'firstName': student_data.get('firstName'),
                 'lastName': student_data.get('lastName'),
-                'lsuId': student_data.get('lsuID'), 
-                'assignedAt': student_data.get('assignedAt')
+                'lsuId': student_data.get('lsuID'),
+                'assignedAt': student_data.get('assignedAt'),
+                'email': doc.id  # Use Firestore document ID as email
             })
         return jsonify({'students': students}), 200
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
 
 @app.route('/api/classroom/<class_name>/add_student', methods=['POST'])
 def add_student(class_name):
@@ -250,41 +267,47 @@ def add_student(class_name):
 
     except Exception as e:
         return jsonify({'error': f'Error adding student: {str(e)}'}), 500
-
-@app.route('/api/classroom/<class_name>/edit_student/<lsu_id>', methods=['GET', 'PUT'])
-def edit_student(class_name, lsu_id):
+    
+@app.route('/api/classroom/<class_name>/edit_student/<student_email>', methods=['GET', 'PUT'])
+def edit_student(class_name, student_email):
     try:
-        lsu_id = str(lsu_id)  # Treat LSU ID as string
-        student_ref = db.collection('classrooms').document(class_name).collection('students').document(lsu_id)
+        classroom_ref = db.collection('classrooms').document(class_name).collection('students').document(student_email)
 
         if request.method == 'GET':
-            # Fetching student data
-            student_doc = student_ref.get()
-
+            student_doc = classroom_ref.get()
             if not student_doc.exists:
                 return jsonify({'error': 'Student not found.'}), 404
 
-            student = student_doc.to_dict()
+            student_data = student_doc.to_dict()
 
-            # Ensure lsuId is included in the returned student data
-            student['lsuId'] = lsu_id  # Make sure lsuId is included
-            return jsonify({'student': student}), 200
+            # Ensure LSU ID is returned correctly
+            student_response = {
+                'firstName': student_data.get('firstName', ''),
+                'lastName': student_data.get('lastName', ''),
+                'email': student_data.get('email', student_email),  # Ensure email is included
+                'lsuId': student_data.get('lsuID', '')  # Ensure LSU ID is included
+            }
+
+            return jsonify({'student': student_response}), 200
 
         elif request.method == 'PUT':
-            # Editing student data
             data = request.get_json()
             first_name = data.get('firstName')
             last_name = data.get('lastName')
+            lsu_id = data.get('lsuId')  # Ensure LSU ID is updated
 
-            student_ref.update({
+            # Update student details
+            classroom_ref.update({
                 'firstName': first_name,
-                'lastName': last_name
+                'lastName': last_name,
+                'lsuID': lsu_id
             })
 
-            # Optionally, update user data
-            user_doc = db.collection('users').document(lsu_id)
+            # Also update the user record in Firestore (users collection)
+            user_doc = db.collection('users').document(student_email)
             user_doc.update({
-                'name': f"{last_name}, {first_name}"
+                'name': f"{last_name}, {first_name}",
+                'lsuID': lsu_id
             })
 
             return jsonify({'message': 'Student information updated successfully.'}), 200
@@ -292,17 +315,30 @@ def edit_student(class_name, lsu_id):
     except Exception as e:
         return jsonify({'error': f'Error updating student: {str(e)}'}), 500
 
-
+    
 @app.route('/api/classroom/<class_name>/delete_student/<lsu_id>', methods=['POST'])
 def delete_student(class_name, lsu_id):
     try:
         classroom_ref = db.collection('classrooms').document(class_name)
-        student_ref = classroom_ref.collection('students').document(lsu_id)
+        students_ref = classroom_ref.collection('students')
 
-        if not student_ref.get().exists:
+        # Find the student document based on LSU ID
+        students_query = students_ref.where("lsuID", "==", lsu_id).stream()
+
+        student_doc = None
+        for doc in students_query:
+            student_doc = doc
+            break  # We only need the first match
+
+        if not student_doc:
             return jsonify({'error': 'Student not found in the classroom'}), 404
 
-        student_ref.delete()
+        student_data = student_doc.to_dict()
+        student_email = student_doc.id  # Firestore stores email as document ID
+        student_name = f"{student_data.get('firstName', '')} {student_data.get('lastName', '')}".strip()
+
+        # Delete the student document
+        students_ref.document(student_email).delete()
 
         # Remove student from projects
         projects_ref = classroom_ref.collection('Projects')
@@ -321,11 +357,10 @@ def delete_student(class_name, lsu_id):
                         lsu_id: firestore.DELETE_FIELD
                     })
 
-                    # If no students are left in the team, delete the team
                     if not team_ref.get().to_dict():
                         team_ref.delete()
 
-        return jsonify({'message': 'Student has been successfully removed from the classroom'}), 200
+        return jsonify({'message': f'{student_name} has been successfully removed from the classroom'}), 200
 
     except Exception as e:
         return jsonify({'error': f'Error deleting student: {str(e)}'}), 500

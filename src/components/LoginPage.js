@@ -3,6 +3,7 @@ import { initializeApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 import { getFirestore, doc, getDoc } from 'firebase/firestore';
 import { useNavigate } from 'react-router-dom';
+import { useFlashMessage } from '../FlashMessageContext'; // Import the flash message hook
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 
@@ -18,6 +19,7 @@ const db = getFirestore(app);
 const LoginPage = () => {
   const [message, setMessage] = useState(null);
   const navigate = useNavigate();
+  const addMessage = useFlashMessage(); // Get the flash message function from context
 
   // Add 'login-page' class to the body when the component mounts
   useEffect(() => {
@@ -32,45 +34,49 @@ const LoginPage = () => {
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
       const userEmail = user.email;
-  
+      const userName = user.displayName; // Get the user's display name
+
       // Fetch role & LSUID from Firestore
       const userDoc = await getDoc(doc(db, "users", userEmail));
       if (!userDoc.exists()) {
-        setMessage('User not found in the database.');
+        // Use flash message to alert user not found
+        addMessage("danger", "User not found in the database.");
         return;
       }
-  
+
       const userData = userDoc.data();
       const role = userData.role;
       const LSUID = userData.lsuID || null; // Ensure LSUID is retrieved
-  
+
       // Store user data in localStorage
       localStorage.setItem('role', role);
       localStorage.setItem('userEmail', userEmail);
       if (LSUID) {
         localStorage.setItem('LSUID', LSUID);
       }
-  
+
       // Debugging Logs
       console.log("User Email:", userEmail);
       console.log("User Role:", role);
       console.log("LSUID:", LSUID);
-  
+
+      // Show welcome flash message in the top right corner
+      addMessage("success", `Welcome, ${userName}!`);
+
       // Navigate based on role
       navigate(role === 'teacher' ? '/teachers-home' : '/students-home');
     } catch (error) {
       console.error('Google login failed:', error);
-      setMessage('Google login failed. Please try again.');
+      addMessage("danger", "Google login failed. Please try again.");
     }
   };
-  
 
   return (
     <div className="d-flex justify-content-center align-items-center min-vh-100" style={{ backgroundColor: '#f0f0f0' }}>
       <div className="login-container p-4 bg-white rounded shadow text-center">
         <h2 className="text-center mb-4">Creative Assistant</h2>
   
-        {/* Flash Messages */}
+        {/* Local flash messages (if any) */}
         {message && (
           <div className={`alert ${message.includes('failed') ? 'alert-danger' : 'alert-info'}`} role="alert">
             <strong>{message}</strong>
@@ -92,7 +98,6 @@ const LoginPage = () => {
       </div>
     </div>
   );
-  
-};  
+};
 
 export default LoginPage;
