@@ -2,11 +2,13 @@ import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 import { getFirestore, doc, getDoc, updateDoc, deleteDoc } from "firebase/firestore";
+import { useFlashMessage } from '../FlashMessageContext';
 
 const EditClassroom = () => {
   const { className } = useParams();
   const navigate = useNavigate();
   const db = getFirestore();
+  const addMessage = useFlashMessage();
 
   const [classroomData, setClassroomData] = useState({
     className: "",
@@ -17,6 +19,7 @@ const EditClassroom = () => {
   const [studentFile, setStudentFile] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [showDeleteModal, setShowDeleteModal] = useState(false); // State for delete confirmation modal
 
   useEffect(() => {
     const fetchClassroomDetails = async () => {
@@ -55,47 +58,52 @@ const EditClassroom = () => {
 
   const handleUpdate = async (e) => {
     e.preventDefault();
-
+  
     if (!classroomData.className || !classroomData.courseId || !classroomData.semester) {
       setError("Please provide all required details.");
       return;
     }
-
+  
     try {
       setIsSubmitting(true);
-      const docRef = doc(db, "classrooms", className);
-      await updateDoc(docRef, {
-        class_name: classroomData.className,
-        courseID: classroomData.courseId,
-        semester: classroomData.semester,
-      });
-
+  
+      // Create a FormData object and append all necessary fields
+      const formData = new FormData();
+      formData.append("role", "teacher");
+      // Replace with your current teacher's email (for example, from your auth context)
+      formData.append("userEmail", "teacher@example.com");
+      formData.append("class_name", classroomData.className);
+      formData.append("course_id", classroomData.courseId);
+      formData.append("semester", classroomData.semester);
+      
       if (studentFile) {
-        const formData = new FormData();
         formData.append("student_file", studentFile);
-
-        await axios.post(`http://localhost:5000/update-students/${className}`, formData, {
+      }
+  
+      // Send the request to your Flask endpoint
+      const response = await axios.post(
+        `http://localhost:5000/editclassroom/${className}`,
+        formData,
+        {
           withCredentials: true,
           headers: { "Content-Type": "multipart/form-data" },
-        });
-      }
-
+        }
+      );
+  
       setIsSubmitting(false);
+      addMessage("success", response.data.message);
       navigate(`/classroom/${className}`);
-    } catch (error) {
-      setError("Failed to update classroom. Please try again.");
+    } catch (err) {
+      // Use the error message returned from the backend, if available
+      setError(err.response?.data?.error || "Failed to update classroom. Please try again.");
       setIsSubmitting(false);
     }
-  };
+  };  
 
-  const handleDelete = async () => {
-    const confirmDelete = window.confirm(
-      "Are you sure you want to delete this classroom? This action cannot be undone."
-    );
-    if (!confirmDelete) return;
-
+  const confirmDelete = async () => {
     try {
       await deleteDoc(doc(db, "classrooms", className));
+      addMessage("success", `Classroom '${classroomData.className}' deleted successfully!`);
       navigate("/teachers-home");
     } catch (error) {
       setError("Failed to delete classroom. Please try again.");
@@ -126,18 +134,17 @@ const EditClassroom = () => {
             </div>
 
             <div className="col-md-6 form-group">
-              <label htmlFor="course_id" className="form-label">Course ID</label>
-              <input
-                type="text"
-                id="course_id"
-                className="form-control"
-                value={classroomData.courseId}
-                onChange={(e) =>
-                  setClassroomData({ ...classroomData, courseId: e.target.value })
-                }
-                required
-              />
-            </div>
+            <label htmlFor="course_id" className="form-label">Course ID</label>
+            <input
+              type="text"
+              id="course_id"
+              className="form-control"
+              value={classroomData.courseId}
+              readOnly
+              title="Project name is not editable"
+              style={{ backgroundColor: "#e9ecef", cursor: "not-allowed" }}
+            />
+          </div>
           </div>
 
           <div className="row">
@@ -175,29 +182,50 @@ const EditClassroom = () => {
 
           <div className="d-flex justify-content-start gap-3 mt-3">
             <button type="submit" className="btn action-btn" disabled={isSubmitting}>
-            {isSubmitting ? (
-              <>
-                <span className="spinner-border spinner-border-sm"></span> Uploading...
-              </>
-            ) : (
-              <>
-                <i className="bi bi-upload"></i> Update
-              </>
-            )}
+              {isSubmitting ? (
+                <>
+                  <span className="spinner-border spinner-border-sm"></span> Uploading...
+                </>
+              ) : (
+                <>
+                  <i className="bi bi-upload"></i> Update
+                </>
+              )}
             </button>
-          <button type="button" className="btn back-btn" onClick={() => navigate("/teachers-home")}>
-            <i className="bi bi-arrow-left"></i> Back to Home
-          </button>
-            <button
-              type="button"
-              className="btn delete-btn"
-              onClick={handleDelete}
-            >
+            <button type="button" className="btn back-btn" onClick={() => navigate("/teachers-home")}>
+              <i className="bi bi-arrow-left"></i> Back to Home
+            </button>
+            <button type="button" className="btn delete-btn" onClick={() => setShowDeleteModal(true)}>
               Delete Classroom
             </button>
           </div>
         </form>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="modal fade show d-block" tabIndex="-1" style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
+          <div className="modal-dialog">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">Confirm Deletion</h5>
+                <button type="button" className="btn-close" onClick={() => setShowDeleteModal(false)}></button>
+              </div>
+              <div className="modal-body">
+                <p>Are you sure you want to delete the classroom <strong>{classroomData.className}</strong>? This action cannot be undone.</p>
+              </div>
+              <div className="modal-footer">
+                <button type="button" className="btn btn-secondary" onClick={() => setShowDeleteModal(false)}>
+                  Cancel
+                </button>
+                <button type="button" className="btn btn-danger" onClick={confirmDelete}>
+                  Yes, Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
