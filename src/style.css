@@ -396,7 +396,6 @@ body {
     color: white;
   }
   
-  
   /* --------Flash message styles---------- */
 
   /* Error message */
@@ -492,103 +491,115 @@ body {
         transform: scale(1.02);
       }
       
-  
-    /* --------Home / Dashboard---------- */
-  .semester-section {
-    margin-bottom: 10px; 
-    text-align: left;
-  }
-  
-  
-  .card-wrapper {
-    flex: 0 0 350px; 
-  }
-  
-  .row {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 20px; 
-    justify-content: flex-start;
-  }
-  
-    .col-md-4 {
-    display: flex;
-    margin-bottom: 0; 
-  }
-  
-  .classroom-card {
-    cursor: pointer;
-    border: 1px solid #cdd2e7;
-    border-radius: 10px;
-    background-color: #f0f4f8;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-    padding: 20px;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    width: 100%; 
-    height: 150px;
-    overflow: hidden;
-    text-align: left;
-  }
-  
-  .classroom-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0px 4px 12px rgba(12, 10, 10, 0.1);
-  }
-  
-  .card-body {
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-  }
-  
-  .card-title {
-    font-size: 1.2rem;
-    font-weight: bold;
-    margin-bottom: 10px;
-  }
-  
-  .card-text {
-    font-size: 1rem;
-    margin-bottom: 8px;
-    overflow: hidden;
-  }
-  
-  .classrooms-list {
-    display: flex;
-    flex-direction: column;
-    gap: 10px; 
-  }
-  
-  .center-title {
-    text-align: center;
-  }
+/* --------Home / Dashboard---------- */
+.semester-section {
+  margin-bottom: 10px; 
+  text-align: left;
+}
+.semester-section:first-of-type {
+  margin-bottom: 0;
+}
 
-  .dashboard-title {
-    text-align: center;
-    width: 100%;
+.add-classroom-wrapper {
+  /* Adjust vertical margins if needed */
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+/* Removed fixed-width styles for .card-wrapper in favor of Bootstrap's grid */
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  align-items: flex-start;
+  gap: 0; /* Remove the gap */
+  margin-left: -10px; /* Optional: Adjust for Bootstrap's gutter */
+  margin-right: -10px;
+}
+
+
+.col-md-4 {
+  display: flex;
+  padding-left: 10px; /* Optional: Adjust for Bootstrap's gutter */
+  padding-right: 10px;
+  margin-bottom: 0; /* Ensure no extra bottom margin */
+}
+
+
+.classroom-card {
+  margin: 0; 
+  cursor: pointer;
+  border: 1px solid #cdd2e7;
+  border-radius: 10px;
+  background-color: #f0f4f8;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  height: 150px;
+  overflow: hidden;
+  text-align: left;
+}
+
+.classroom-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0px 4px 12px rgba(12, 10, 10, 0.1);
+}
+
+.card-body {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.card-title {
+  font-size: 1.2rem;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+.card-text {
+  font-size: 1rem;
+  margin-bottom: 8px;
+  overflow: hidden;
+}
+
+.classrooms-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px; 
+}
+
+.center-title {
+  text-align: center;
+}
+
+.dashboard-title {
+  text-align: center;
+  width: 100%;
 }
 
 .assigned-classrooms {
-    text-align: left;
-    width: 100%;
+  text-align: left;
+  width: 100%;
 }
-
 
 .row {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: flex-start;
-    align-items: flex-start;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  align-items: flex-start;
 }
+
 .student-dashboard-container {
   margin: 0 !important;
   padding: 0;
 }
 
-  /* --------Team Pages---------- */
+a  /* --------Team pages---------- */
 
   .team-container {
     width: 100%;
@@ -1060,4 +1071,114 @@ button, .btn, .action-btn, .back-btn, .delete-btn {
 .btn-whiteboard:active {
     background-color: #393e44; /* Even darker blue */
     color: white;
+}
+
+/* about Page */
+.about-container h2 {
+  font-size: 20px;
+  color: #071625;
+}
+/* about Page */
+.about-container {
+  padding: 20px;
+  text-align: center;
+  max-width: 800px;
+  margin: 20px auto;
+  background-color: #f9f9f9; /* Light background color for the box */
+  border: 1px solid #ddd; /* Light border around the box */
+  border-radius: 8px; /* Rounded corners */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Soft shadow for depth */
+}
+
+.about-container h1 {
+  color: #415b8b;
+  font-size: 24px; /* Adjusted font size */
+}
+
+.about-container p {
+  font-size: 18px;
+  color: #555;
+  margin-bottom: 20px; /* Added margin for spacing */
+}
+
+.about-container h2 {
+  font-size: 22px;
+  color: #333;
+  margin-bottom: 10px;
+}
+
+.about-container ul {
+  list-style: none;
+  padding: 0;
+  text-align: left;
+}
+
+.about-container ul li {
+  font-size: 16px;
+  color: #555;
+  margin: 5px 0;
+}
+
+
+/*Contact Page */
+.contact-container {
+  padding: 20px;
+  text-align: center;
+  max-width: 500px; /* Smaller width */
+  margin: 20px auto;
+  background-color: #f9f9f9; /* Light background color for the box */
+  border: 1px solid #ddd; /* Light border around the box */
+  border-radius: 8px; /* Rounded corners */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Soft shadow for depth */
+}
+
+.contact-container h1 {
+  color: #415b8b;
+  font-size: 22px; /* Smaller font size */
+}
+
+.contact-container p {
+  font-size: 16px;
+  color: #555;
+  margin-bottom: 15px; /* Reduced spacing between text and form */
+}
+
+.contact-form {
+  display: flex;
+  flex-direction: column;
+}
+
+.contact-form label {
+  text-align: left;
+  font-size: 14px;
+  color:#415b8b;
+  margin: 5px 0; /* Reduced margin for label */
+}
+
+.contact-form input,
+.contact-form textarea {
+  padding: 8px;
+  font-size: 14px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  margin-bottom: 10px; /* Reduced margin between input fields */
+}
+
+.contact-form textarea {
+  resize: vertical;
+  height: 100px;
+}
+
+.contact-form button {
+  padding: 10px;
+  background-color: #343a40;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.contact-form button:hover {
+  background-color:#1b1e20;
 }
