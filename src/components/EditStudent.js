@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { useFlashMessage } from '../FlashMessageContext'; // Import flash message hook
+
 
 const EditStudent = () => {
     // studentId is now expected to be the actual email (e.g., "gracia@gmail.com")
     const { className, studentId } = useParams();
     const navigate = useNavigate();
+    const addMessage = useFlashMessage(); 
 
     const [student, setStudent] = useState({
         firstName: '',
@@ -51,6 +54,8 @@ const EditStudent = () => {
                 `http://localhost:5000/api/classroom/${className}/edit_student/${studentId}`,
                 student
             );
+
+            addMessage('success', `Updated '${student.firstName} ${student.lastName}' details successfully!`); // Set flash message
             navigate(`/classroom/${className}/manage-students`);
         } catch (error) {
             console.error('Error updating student data:', error);
