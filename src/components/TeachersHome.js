@@ -7,10 +7,10 @@ const TeacherHome = () => {
   const [classrooms, setClassrooms] = useState({ groupedClassrooms: {}, sortedSemesters: [] });
   const [loading, setLoading] = useState(true);
   const [userEmail, setUserEmail] = useState(null);
-  const [teacherNames, setTeacherNames] = useState({}); 
-  const [flashMessage, setFlashMessage] = useState(""); 
-  const [flashMessageType, setFlashMessageType] = useState(""); 
-  const [showAlert, setShowAlert] = useState(false); 
+  const [teacherNames, setTeacherNames] = useState({});
+  const [flashMessage, setFlashMessage] = useState("");
+  const [flashMessageType, setFlashMessageType] = useState("");
+  const [showAlert, setShowAlert] = useState(false);
   const navigate = useNavigate();
   const auth = getAuth();
 
@@ -24,7 +24,6 @@ const TeacherHome = () => {
       }
       setLoading(false);
     });
-
     return () => unsubscribe();
   }, [auth]);
 
@@ -51,7 +50,6 @@ const TeacherHome = () => {
   useEffect(() => {
     const fetchClassrooms = async () => {
       if (!userEmail) return;
-
       try {
         setLoading(true);
         const db = getFirestore();
@@ -84,7 +82,6 @@ const TeacherHome = () => {
             teacherNamesObj[classroom.teacherEmail] = teacherDoc.data().name;
           }
         }
-
         setTeacherNames(teacherNamesObj);
       } catch (error) {
         console.error("Error fetching classrooms:", error);
@@ -92,7 +89,6 @@ const TeacherHome = () => {
         setLoading(false);
       }
     };
-
     fetchClassrooms();
   }, [userEmail]);
 
@@ -111,99 +107,93 @@ const TeacherHome = () => {
 
   return (
     <div className="teacher-dashboard mt-4">
-    {loading ? (
-      <p>Loading...</p>
-    ) : userEmail ? (
-      <>
-        <h1 className="dashboard-title center-title mb-4">
-          <i className="bi bi-person-workspace"></i> Teacher's Dashboard
-        </h1>
-  
-        {showAlert && (
-          <div className={`alert-wrapper ${flashMessage ? 'fade-in' : 'fade-out'}`}>
-            <div className={`alert ${flashMessageType === 'error' ? 'error' : ''}`}>
-              {flashMessage}
-              <button
-                type="button"
-                className="btn-close"
-                onClick={() => setShowAlert(false)}
-              >
-                &times;
-              </button>
+      {loading ? (
+        <p>Loading...</p>
+      ) : userEmail ? (
+        <>
+          <h1 className="dashboard-title center-title mb-4">
+            <i className="bi bi-person-workspace"></i> Teacher's Dashboard
+          </h1>
+
+          {showAlert && (
+            <div className={`alert-wrapper ${flashMessage ? 'fade-in' : 'fade-out'}`}>
+              <div className={`alert ${flashMessageType === 'error' ? 'error' : ''}`}>
+                {flashMessage}
+                <button
+                  type="button"
+                  className="btn-close"
+                  onClick={() => setShowAlert(false)}
+                >
+                  &times;
+                </button>
+              </div>
             </div>
+          )}
+
+          <div className="classrooms-list">
+            {classrooms.sortedSemesters.length > 0 ? (
+              classrooms.sortedSemesters.map((semester, semesterIndex) => (
+                <div key={semester} className="semester-section">
+                  <h4 className={semester === "Fall 2025" ? "fall-2025" : ""}>{semester}</h4>
+                  <div className="row">
+                    {classrooms.groupedClassrooms[semester].map((classroom) => (
+                      <div key={classroom.id} className="col-md-4 mb-2">
+                        <div
+                          className="classroom-card"
+                          onClick={() => navigate(`/classroom/${classroom.courseID}`)}
+                        >
+                          <div className="card-body">
+                            <h5 className="card-title">
+                              {classroom.courseID} - {classroom.class_name}
+                            </h5>
+                            <p className="card-text">
+                              Instructor: {teacherNames[classroom.teacherEmail] || 'Loading...'}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                    {/* Add Classroom Card at the end of the first semester */}
+                    {semesterIndex === 0 && (
+                      <div className="col-md-4 mb-2">
+                        <div
+                          className="classroom-card"
+                          onClick={() => navigate('/add-classroom')}
+                        >
+                          <div className="card-body d-flex align-items-center justify-content-center">
+                            <h5 className="card-title text-center" style={{ fontWeight: 'normal' }}>
+                              <i className="bi bi-plus-circle"></i> Add Classroom
+                            </h5>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))
+            ) : (
+              // When no classrooms exist, show only the Add Classroom card
+              <div className="row">
+                <div className="col-md-4 mb-2">
+                  <div
+                    className="classroom-card"
+                    onClick={() => navigate('/add-classroom')}
+                  >
+                    <div className="card-body d-flex align-items-center justify-content-center">
+                      <h5 className="card-title text-center" style={{ fontWeight: 'normal' }}>
+                        <i className="bi bi-plus-circle"></i> Add Classroom
+                      </h5>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
-        )}
-        
-        <div className="classrooms-list">
-  {classrooms.sortedSemesters.length > 0 ? (
-    classrooms.sortedSemesters.map((semester, semesterIndex) => (
-      <div key={semester} className="semester-section">
-        <h4 className={semester === "Fall 2025" ? "fall-2025" : ""}>{semester}</h4>
-        
-        <div className="row">
-  {classrooms.groupedClassrooms[semester].map((classroom) => (
-    <div key={classroom.id} className="card-wrapper">
-      <div
-        className="classroom-card"
-        onClick={() => navigate(`/classroom/${classroom.classID}`)}
-      >
-        <div className="card-body">
-          <h5 className="card-title">
-            {classroom.courseID} - {classroom.class_name}
-          </h5>
-          <p className="card-text">
-            Instructor: {teacherNames[classroom.teacherEmail] || 'Loading...'}
-          </p>
-        </div>
-      </div>
+        </>
+      ) : (
+        <p>No user logged in. Please sign in to continue.</p>
+      )}
     </div>
-  ))}
-  {/* Add Classroom Card at the end of the first semester */}
-  {semesterIndex === 0 && (
-    <div className="card-wrapper">
-      <div
-        className="classroom-card"
-        onClick={() => navigate('/add-classroom')}
-      >
-        <div className="card-body d-flex align-items-center justify-content-center">
-          <h5 className="card-title text-center" style={{ fontWeight: 'normal' }}>
-            <i className="bi bi-plus-circle"></i> Add Classroom
-          </h5>
-        </div>
-      </div>
-    </div>
-  )}
-</div>
-
-      </div>
-    ))
-  ) : (
-    // When no classrooms exist, show only the Add Classroom card
-    <div className="row">
-      <div className="col-md-4 mb-2">
-        <div
-          className="classroom-card"
-          onClick={() => navigate('/add-classroom')}
-        >
-          <div className="card-body d-flex align-items-center justify-content-center">
-            <h5 className="card-title text-center" style={{ fontWeight: 'normal' }}>
-              <i className="bi bi-plus-circle"></i> Add Classroom
-            </h5>
-          </div>
-        </div>
-      </div>
-    </div>
-  )}
-</div>
-
-
-
-      </>
-    ) : (
-      <p>No user logged in. Please sign in to continue.</p>
-    )}
-  </div>
-  
   );
 };
 
