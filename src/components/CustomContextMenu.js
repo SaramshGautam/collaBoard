@@ -7,7 +7,7 @@ import {
 } from "tldraw";
 // import { nanoid } from "nanoid";
 import "../App.css";
-import HistoryCommentPanel from "./HistoryCommentPanel";
+//import HistoryCommentPanel from "./HistoryCommentPanel";
 import ToggleExpandButton from "./ToggleExpandButton";
 import ReactionTooltip from "./tooltip/ReactionTooltip";
 import ReactionsMenu from "./ReactionsMenu";
@@ -208,6 +208,7 @@ export default function CustomContextMenu({
 
         <DefaultContextMenuContent />
       </DefaultContextMenu>
+      {/* Toggle Button positioned at the bottom-left corner of the panel 
       <div className="panelContainerWrapper">
         {!isPanelCollapsed && (
           <HistoryCommentPanel
@@ -224,7 +225,7 @@ export default function CustomContextMenu({
             togglePanel={togglePanel}
           />
         )}
-      </div>
+      </div>*/}
       <CommentBox
         selectedShape={selectedShape}
         addComment={addComment}
