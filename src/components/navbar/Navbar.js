@@ -39,11 +39,11 @@ const Navbar = () => {
       <div className="navbar-left">
         {/* Logo and links */}
         <div className="navbar-title" onClick={() => navigate(homeRoute)}>
-          collaBOARD
+          Creative Assistant
         </div>
         <div className="navbar-links">
-          <a href="#about">About</a>
-          <a href="#contact">Contact</a>
+          <a onClick={() => navigate("/about")}>About</a>
+          <a onClick={() => navigate("/contact")}>Contact</a>
         </div>
       </div>
       <div className="navbar-right">
