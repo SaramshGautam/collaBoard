@@ -4,11 +4,10 @@ from flask import Flask, request, jsonify, session
 import os
 from datetime import datetime
 import pandas as pd
-from flask_cors import CORS
-from flask import jsonify, request, redirect, url_for, flash
+from flask_cors import CORS, cross_origin
+from flask import redirect, url_for, flash
 from werkzeug.utils import secure_filename
 from google.cloud.firestore import SERVER_TIMESTAMP
-
 
 # Initialize Flask App
 app = Flask(__name__)
@@ -17,33 +16,30 @@ app.secret_key = 'secret_key'
 # Initialize Firebase
 cred = credentials.Certificate("firebase-key.json")
 firebase_admin.initialize_app(cred)
+
+# Initialize CORS (this automatically sets CORS headers)
 CORS(app, supports_credentials=True, resources={r"/*": {"origins": "http://localhost:3000"}})
 
 db = firestore.client()
 
 # Ensure uploads directory exists
 UPLOAD_FOLDER = 'uploads'
-ALLOWED_EXTENSIONS = {'csv', 'xls', 'xlsx'}  # You can add other file extensions here
+ALLOWED_EXTENSIONS = {'csv', 'xls', 'xlsx'}
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-
 
 @app.route('/test_cors', methods=['GET'])
 def test_cors():
     return jsonify({"message": "CORS is working!"}), 200
-    
+
 def is_authenticated():
     return 'user' in session and 'role' in session  # Check if user is logged in
 
 @app.after_request
 def after_request(response):
-    response.headers.add('Access-Control-Allow-Origin', 'http://localhost:3000')
-    response.headers.add('Access-Control-Allow-Credentials', 'true')  
-    response.headers.add('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
-    response.headers.add('Access-Control-Allow-Headers', 'Content-Type, Authorization')
+    # Only add custom headers that are not already handled by Flask-CORS.
     response.headers.add('Cross-Origin-Opener-Policy', 'same-origin')
     response.headers.add('Cross-Origin-Embedder-Policy', 'require-corp')
     return response
-
 
 @app.route('/')
 def home():
@@ -133,7 +129,6 @@ def addclassroom():
 
             # Create classroom document using course_id as document ID
             classroom_ref.set({
-                'classID': course_id, 
                 'courseID': course_id,  
                 'semester': semester,   
                 'class_name': class_name, 
@@ -214,10 +209,184 @@ def classroom_view(class_id):
         "role": role,
     })
 
-@app.route('/api/classroom/<classID>/manage_students', methods=['GET'])
-def manage_students(classID):
+@app.route('/editclassroom/<classroom_id>', methods=['POST'])
+def editclassroom(classroom_id):
+    role = request.form.get('role')
+    user_email = request.form.get('userEmail')
+    print(f"Received edit request for classroom {classroom_id} from user with role: {role}, email: {user_email}")
+
+    # Ensure authentication
+    if not role or not user_email:
+        return jsonify({"error": "Role or user email not provided."}), 400
+    if role != 'teacher': 
+        return jsonify({"error": "Access forbidden: User is not a teacher"}), 403
+
+    # Get reference to the existing classroom document
+    classroom_ref = db.collection('classrooms').document(classroom_id)
+    classroom_doc = classroom_ref.get()
+    if not classroom_doc.exists:
+        return jsonify({"error": "Classroom does not exist."}), 404
+
+    # Retrieve form data
+    new_class_name = request.form.get('class_name')
+    new_course_id = request.form.get('course_id')
+    new_semester = request.form.get('semester')
+    student_file = request.files.get('student_file')
+
+    if not new_class_name or not new_course_id or not new_semester:
+        return jsonify({"error": "Class name, course ID, and semester are required."}), 400
+
+    # Validate duplicate classroom name (exclude current classroom)
+    existing_classrooms = db.collection('classrooms') \
+        .where('teacherEmail', '==', user_email) \
+        .where('class_name', '==', new_class_name) \
+        .get()
+    for doc in existing_classrooms:
+        if doc.id != classroom_id:
+            return jsonify({"error": f"Classroom name '{new_class_name}' already exists. Please change."}), 400
+
+    # Validate duplicate course id (exclude current classroom)
+    existing_course_docs = db.collection('classrooms') \
+        .where('courseID', '==', new_course_id) \
+        .get()
+    for doc in existing_course_docs:
+        if doc.id != classroom_id:
+            return jsonify({"error": f"Course ID '{new_course_id}' already exists. Please change."}), 400
+
+    # Update classroom details
     try:
-        classroom_ref = db.collection('classrooms').document(classID).collection('students')
+        classroom_ref.update({
+            'class_name': new_class_name,
+            'courseID': new_course_id,
+            'semester': new_semester
+        })
+    except Exception as e:
+        return jsonify({"error": f"Error updating classroom: {e}"}), 500
+
+    # Process student file if provided
+    if student_file:
+        file_ext = os.path.splitext(student_file.filename)[1].lower()
+        if file_ext not in ['.csv', '.xlsx']:
+            return jsonify({"error": "Invalid file format. Please upload a CSV or Excel file."}), 400
+
+        file_path = os.path.join(UPLOAD_FOLDER, student_file.filename)
+        student_file.save(file_path)
+        try:
+            # Read the file based on its extension
+            if file_ext == '.csv':
+                df = pd.read_csv(file_path)
+            else:
+                df = pd.read_excel(file_path)
+
+            # Ensure required columns are present
+            if not {'firstname', 'lastname', 'email', 'lsu_id'}.issubset(df.columns):
+                os.remove(file_path)
+                return jsonify({"error": "File must have columns: firstname, lastname, email, lsu_id."}), 400
+
+            # Process each student record in the file
+            for _, row in df.iterrows():
+                student_email = row['email']
+                lsu_id = str(row['lsu_id'])  # Convert to string if needed
+
+                student_data = {
+                    'firstName': row['firstname'],
+                    'lastName': row['lastname'],
+                    'email': student_email,
+                    'lsuID': lsu_id,
+                    'assignedAt': firestore.SERVER_TIMESTAMP
+                }
+
+                student_doc_ref = classroom_ref.collection('students').document(student_email)
+                if student_doc_ref.get().exists:
+                    # Update existing student details
+                    student_doc_ref.update(student_data)
+                else:
+                    # Add new student record
+                    student_doc_ref.set(student_data)
+
+                # Ensure user exists in the 'users' collection
+                user_doc = db.collection('users').document(student_email)
+                if not user_doc.get().exists:
+                    user_doc.set({
+                        'email': student_email,
+                        'role': 'student',
+                        'name': f"{row['lastname']}, {row['firstname']}",
+                        'lsuID': lsu_id,
+                        'createdAt': firestore.SERVER_TIMESTAMP
+                    })
+            os.remove(file_path)  # Clean up file after processing
+        except Exception as e:
+            os.remove(file_path)
+            return jsonify({"error": f"Error processing student file: {e}"}), 500
+
+    return jsonify({"message": f'Classroom "{new_class_name}" updated successfully!'}), 200
+
+@app.route('/update-students/<classroom_id>', methods=['POST'])
+def update_students(classroom_id):
+    # Verify classroom exists
+    classroom_ref = db.collection('classrooms').document(classroom_id)
+    if not classroom_ref.get().exists:
+        return jsonify({"error": "Classroom does not exist."}), 404
+
+    student_file = request.files.get('student_file')
+    if not student_file:
+        return jsonify({"error": "Student file is required."}), 400
+
+    file_ext = os.path.splitext(student_file.filename)[1].lower()
+    if file_ext not in ['.csv', '.xlsx']:
+        return jsonify({"error": "Invalid file format. Please upload a CSV or Excel file."}), 400
+
+    file_path = os.path.join(UPLOAD_FOLDER, student_file.filename)
+    student_file.save(file_path)
+    try:
+        # Read file based on extension
+        if file_ext == '.csv':
+            df = pd.read_csv(file_path)
+        else:
+            df = pd.read_excel(file_path)
+
+        # Ensure required columns exist
+        if not {'firstname', 'lastname', 'email', 'lsu_id'}.issubset(df.columns):
+            os.remove(file_path)
+            return jsonify({"error": "File must have columns: firstname, lastname, email, lsu_id."}), 400
+
+        # Process each student record
+        for _, row in df.iterrows():
+            student_email = row['email']
+            lsu_id = str(row['lsu_id'])
+            student_data = {
+                'firstName': row['firstname'],
+                'lastName': row['lastname'],
+                'email': student_email,
+                'lsuID': lsu_id,
+                'assignedAt': firestore.SERVER_TIMESTAMP
+            }
+            student_doc_ref = classroom_ref.collection('students').document(student_email)
+            if student_doc_ref.get().exists:
+                student_doc_ref.update(student_data)
+            else:
+                student_doc_ref.set(student_data)
+
+            # Create user document if not exists
+            user_doc = db.collection('users').document(student_email)
+            if not user_doc.get().exists:
+                user_doc.set({
+                    'email': student_email,
+                    'role': 'student',
+                    'name': f"{row['lastname']}, {row['firstname']}",
+                    'lsuID': lsu_id,
+                    'createdAt': firestore.SERVER_TIMESTAMP
+                })
+        os.remove(file_path)
+        return jsonify({"message": "Student records updated successfully!"}), 200
+    except Exception as e:
+        os.remove(file_path)
+        return jsonify({"error": f"Error processing student file: {e}"}), 500
+
+@app.route('/api/classroom/<courseID>/manage_students', methods=['GET'])
+def manage_students(courseID):
+    try:
+        classroom_ref = db.collection('classrooms').document(courseID).collection('students')
         students = []
         for doc in classroom_ref.stream():
             student_data = doc.to_dict()
@@ -315,7 +484,6 @@ def edit_student(class_name, student_email):
     except Exception as e:
         return jsonify({'error': f'Error updating student: {str(e)}'}), 500
 
-    
 @app.route('/api/classroom/<class_name>/delete_student/<lsu_id>', methods=['POST'])
 def delete_student(class_name, lsu_id):
     try:
@@ -364,7 +532,7 @@ def delete_student(class_name, lsu_id):
 
     except Exception as e:
         return jsonify({'error': f'Error deleting student: {str(e)}'}), 500
-
+    
 @app.route('/api/add_project/<class_name>', methods=['POST'])
 def add_project(class_name):
     try:
@@ -376,7 +544,12 @@ def add_project(class_name):
         if not project_name or not due_date or not description:
             return jsonify({"message": "Project name, due date, and description are required."}), 400
 
+        # Check for duplicate project name within the same class
         project_ref = db.collection('classrooms').document(class_name).collection('Projects').document(project_name)
+        if project_ref.get().exists:
+            return jsonify({"message": f"A project with the name '{project_name}' already exists. Please choose a different name."}), 400
+
+        # If no duplicate, create the project
         project_ref.set({
             'projectName': project_name,
             'dueDate': due_date,
@@ -391,30 +564,34 @@ def add_project(class_name):
             team_file.save(file_path)
 
             try:
+                # Read file and verify required columns (note: 'lsu_id' is not required here)
                 data = pd.read_csv(file_path) if filename.endswith('.csv') else pd.read_excel(file_path)
-                required_columns = ['firstname', 'lastname', 'email', 'lsu_id', 'teamname']
-
+                required_columns = ['firstname', 'lastname', 'email', 'teamname']
                 missing_columns = [col for col in required_columns if col not in data.columns]
                 if missing_columns:
                     return jsonify({"message": f"File missing columns: {', '.join(missing_columns)}"}), 400
 
+                # Retrieve class students (keyed by student email)
                 class_students = {
-                    student.id: student.to_dict() for student in db.collection('classrooms').document(class_name).collection('students').stream()
+                    student.id: student.to_dict()
+                    for student in db.collection('classrooms').document(class_name).collection('students').stream()
                 }
 
                 for _, row in data.iterrows():
-                    lsu_id = str(row['lsu_id'])
                     student_email = row['email']
                     student_name = f"{row['lastname']}, {row['firstname']}"
                     team_name = row['teamname']
 
-                    if lsu_id not in class_students:
-                        return jsonify({"message": f"Student {student_name} (LSUID: {lsu_id}) is not in this class."}), 400
+                    # Verify if the student exists in the class using email.
+                    if student_email not in class_students:
+                        return jsonify({"message": f"Student {student_name} (Email: {student_email}) is not in this class."}), 400
 
-                    team_ref = db.collection('classrooms').document(class_name).collection('Projects').document(project_name).collection('teams').document(team_name)
+                    team_ref = db.collection('classrooms').document(class_name)\
+                                .collection('Projects').document(project_name)\
+                                .collection('teams').document(team_name)
                     
                     team_ref.set({
-                        lsu_id: {
+                        student_email: {
                             "name": student_name,
                             "email": student_email
                         }
@@ -428,6 +605,107 @@ def add_project(class_name):
         return jsonify({
             "message": "Project added successfully.",
             "teamsCreated": teams_created
+        }), 200
+
+    except Exception as e:
+        return jsonify({"message": f"An unexpected error occurred: {str(e)}"}), 500
+    
+@app.route('/api/classroom/<class_name>/project/<project_name>/edit', methods=['POST'])
+def edit_project(class_name, project_name):
+    try:
+        # Normalize the current project name from the URL
+        project_name = project_name.strip()
+        
+        # Get new project details from the request form (normalize project name)
+        project_name_new = request.form.get('project_name')
+        if project_name_new:
+            project_name_new = project_name_new.strip()
+        due_date = request.form.get('due_date')
+        description = request.form.get('description')
+        team_file = request.files.get('team_file')
+
+        # Get the current project document
+        project_ref = db.collection('classrooms').document(class_name).collection('Projects').document(project_name)
+        project_doc = project_ref.get()
+        if not project_doc.exists:
+            return jsonify({"message": f"Project '{project_name}' does not exist."}), 404
+
+        current_data = project_doc.to_dict()
+        # If any field is missing in the form, use the current value
+        if not project_name_new:
+            project_name_new = current_data.get('projectName', project_name)
+        if not due_date:
+            due_date = current_data.get('dueDate')
+        if not description:
+            description = current_data.get('description')
+
+        # Validate required fields
+        if not project_name_new or not due_date or not description:
+            return jsonify({"message": "Project name, due date, and description are required."}), 400
+
+        # If the project name is being changed, perform duplicate check
+        if project_name_new.lower() != project_name.lower():
+            duplicate_ref = db.collection('classrooms').document(class_name).collection('Projects').document(project_name_new)
+            if duplicate_ref.get().exists:
+                return jsonify({"message": f"A project with the name '{project_name_new}' already exists. Please choose a different name."}), 400
+
+        # Update project details (other fields remain unchanged if not provided)
+        project_ref.update({
+            'projectName': project_name_new,
+            'dueDate': due_date,
+            'description': description,
+            'updatedAt': firestore.SERVER_TIMESTAMP
+        })
+
+        teams_updated = False
+        if team_file and allowed_file(team_file.filename):
+            filename = secure_filename(team_file.filename)
+            file_path = os.path.join('uploads', filename)
+            team_file.save(file_path)
+
+            try:
+                # Read the team file (CSV/Excel)
+                data = pd.read_csv(file_path) if filename.endswith('.csv') else pd.read_excel(file_path)
+                required_columns = ['firstname', 'lastname', 'email', 'teamname']
+                missing_columns = [col for col in required_columns if col not in data.columns]
+                if missing_columns:
+                    return jsonify({"message": f"File missing columns: {', '.join(missing_columns)}"}), 400
+
+                # Retrieve classroom students (keys are student emails)
+                class_students = {
+                    student.id: student.to_dict()
+                    for student in db.collection('classrooms').document(class_name).collection('students').stream()
+                }
+
+                # Update the team details in the project using email as the key
+                for _, row in data.iterrows():
+                    student_email = row['email']
+                    student_name = f"{row['lastname']}, {row['firstname']}"
+                    team_name = row['teamname']
+
+                    # Ensure the student exists in the class using email
+                    if student_email not in class_students:
+                        return jsonify({"message": f"Student {student_name} (Email: {student_email}) is not in this class."}), 400
+
+                    team_ref = db.collection('classrooms').document(class_name)\
+                                .collection('Projects').document(project_name)\
+                                .collection('teams').document(team_name)
+                    
+                    team_ref.set({
+                        student_email: {
+                            "name": student_name,
+                            "email": student_email
+                        }
+                    }, merge=True)
+
+                teams_updated = True
+
+            except Exception as e:
+                return jsonify({"message": f"Error processing team file: {str(e)}"}), 500
+
+        return jsonify({
+            "message": "Project updated successfully.",
+            "teamsUpdated": teams_updated
         }), 200
 
     except Exception as e:
@@ -468,6 +746,7 @@ def delete_project(class_name, project_name):
 
     except Exception as e:
         return jsonify({'error': f'Error deleting project: {str(e)}'}), 500
+
 
 
 @app.route('/api/classroom/<class_name>/project/<project_name>/manage_team', methods=['GET', 'POST'])
@@ -540,70 +819,72 @@ def manage_team(class_name, project_name):
 @app.route('/save-teams', methods=['POST'])
 def save_teams():
     try:
-        data = request.get_json()  # Move this line here to properly initialize 'data'
+        data = request.get_json()
         if not data:
             return jsonify({"error": "No data received."}), 400
 
-        teams = data.get("teams", [])
+        teams_client = data.get("teams", [])
         class_name = data.get('class_name')
         project_name = data.get('project_name')
 
-        if not isinstance(teams, list):
+        if not isinstance(teams_client, list):
             return jsonify({"error": "Invalid format for teams. Expected a list."}), 400
 
-        teams_collection_ref = db.collection('classrooms').document(class_name).collection('Projects').document(project_name).collection('teams')
+        teams_collection_ref = db.collection('classrooms').document(class_name)\
+                                    .collection('Projects').document(project_name)\
+                                    .collection('teams')
 
-        existing_teams = teams_collection_ref.stream()
-        existing_team_data = {team.id: team.to_dict() for team in existing_teams}
+        new_teams_data = {}
+        new_team_names = set()
 
-        processed_students = set()
-
-        for team in teams:
+        for team in teams_client:
             team_name = team.get("teamName")
-            students = team.get("students", [])
-
             if not team_name:
                 return jsonify({"error": "Team name is missing for one of the teams."}), 400
-
-            if students is None:
-                students = []
-
+            new_team_names.add(team_name)
+            students = team.get("students", [])
             team_data = {}
+
             for student_email in students:
-                if student_email in processed_students:
-                    continue
-
-                processed_students.add(student_email)
-
-                student_ref = db.collection('classrooms').document(class_name).collection('students').document(student_email).get()
+                student_ref = db.collection('classrooms').document(class_name)\
+                                .collection('students').document(student_email).get()
                 if student_ref.exists:
                     student_info = student_ref.to_dict()
-                    team_data[student_email] = f"{student_info['lastName']}, {student_info['firstName']}"
-
-                    # Remove student from any existing team
-                    for old_team_name, old_team_data in existing_team_data.items():
-                        if student_email in old_team_data:
-                            del old_team_data[student_email]
-
-                            # If the old team is empty, delete the team
-                            if not old_team_data:
-                                teams_collection_ref.document(old_team_name).delete()
-                                print(f"Deleted empty team document: '{old_team_name}'")
-                            else:
-                                # Otherwise, update the team with remaining students
-                                teams_collection_ref.document(old_team_name).set(old_team_data)
+                    first_name = student_info.get('firstName') or student_info.get('firstname') or ''
+                    last_name = student_info.get('lastName') or student_info.get('lastname') or ''
+                    full_name = f"{last_name}, {first_name}".strip()
+                    if not full_name or full_name == ",":
+                        full_name = student_email
+                    
+                    # Store as a map under the student's email
+                    team_data[student_email] = {
+                        "email": student_email,
+                        "name": full_name
+                    }
                 else:
                     return jsonify({"error": f"Student {student_email} does not exist in the classroom."}), 404
+            
+            new_teams_data[team_name] = team_data
 
-            # After all removals from old teams, update or create the new team
+        # Fetch existing teams
+        existing_team_docs = teams_collection_ref.stream()
+        existing_team_names = {doc.id for doc in existing_team_docs}
+
+        # Update or create teams
+        for team_name, team_data in new_teams_data.items():
             teams_collection_ref.document(team_name).set(team_data)
+
+        # Delete removed teams
+        teams_to_delete = existing_team_names - new_team_names
+        for team_name in teams_to_delete:
+            teams_collection_ref.document(team_name).delete()
 
         return jsonify({"message": "Teams saved successfully!"}), 200
 
     except Exception as e:
         print(f"An error occurred: {str(e)}")
         return jsonify({"error": f"An error occurred: {str(e)}"}), 500
-    
+
 @app.route('/api/student/<email>/project/<class_name>/<project_name>', methods=['GET'])
 def get_student_team(email, class_name, project_name):
     try:
@@ -653,6 +934,27 @@ def get_student_projects(email):
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+    
+@app.route('/contact', methods=['POST'])
+def handle_contact():
+    data = request.get_json()
+
+    # Log the data to the console (for debugging)
+    print(f"New message from {data['name']} ({data['email']}):")
+    print(f"Phone: {data['phone']}")
+    print(f"Message: {data['message']}")
+
+    # Save the data to Firestore in the contactMessages collection
+    contact_ref = db.collection('contactMessages').add({
+        'name': data['name'],
+        'email': data['email'],
+        'phone': data['phone'],
+        'message': data['message'],
+        'timestamp': SERVER_TIMESTAMP  # Automatically assigns the current time
+    })
+
+    # Return a success response
+    return jsonify({"message": "Message received successfully!"}), 200
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
