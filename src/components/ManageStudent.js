@@ -14,9 +14,9 @@ const ManageStudent = () => {
   useEffect(() => {
     if (!className) return;
 
-    const fetchStudents = async (classID) => {
+    const fetchStudents = async (courseID) => {
       try {
-        const response = await axios.get(`http://localhost:5000/api/classroom/${classID}/manage_students`);
+        const response = await axios.get(`http://localhost:5000/api/classroom/${courseID}/manage_students`);
 
         console.log("Fetched Students:", response.data.students);
 
