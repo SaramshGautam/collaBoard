@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { getFirestore, collection, getDocs } from 'firebase/firestore';
 import { doc, deleteDoc } from 'firebase/firestore';
+import { useFlashMessage } from '../FlashMessageContext';  // Import the Flash Message context
+import axios from 'axios';
 
 const ManageTeams = () => {
   const { className, projectName } = useParams();
@@ -10,6 +12,10 @@ const ManageTeams = () => {
   const [students, setStudents] = useState([]);
   const [teams, setTeams] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false); // Modal state
+  const [teamToDelete, setTeamToDelete] = useState(null); // Store the team to be deleted
+  const addMessage = useFlashMessage();  // Get the function to add flash messages
+
 
   useEffect(() => {
     const fetchTeamsAndStudents = async () => {
@@ -56,11 +62,20 @@ const ManageTeams = () => {
   }, [className, projectName]);  
 
   const handleCreateTeam = () => {
-    if (teamName && !teams.some(team => team.teamName === teamName)) {
-      setTeams([...teams, { teamName, students: [] }]);
-      setTeamName('');
+    if (!teamName) return;
+    
+    // Check for duplicate team name (case-insensitive)
+    if (teams.some(team => team.teamName.toLowerCase() === teamName.toLowerCase())) {
+      addMessage('error', `A team with the name '${teamName}' already exists. Please choose a different name.`);
+      return;
     }
+    
+    // If no duplicate exists, create the team
+    setTeams([...teams, { teamName, students: [] }]);
+    setTeamName('');
+    addMessage('success', `Team '${teamName}' created successfully!`);
   };
+  
 
   const handleSaveChanges = () => {
     const teamsData = teams.map(team => ({
@@ -84,10 +99,10 @@ const ManageTeams = () => {
         if (data.error) {
           alert(data.error);
         } else {
-          alert(data.message);
+          addMessage("success", data.message);
         }
       })
-      .catch(error => alert('An error occurred while saving teams.'));
+      .catch(error => addMessage("error", "An error occurred while saving teams.") );
   };
 
   const handleDragStart = (event, student) => {
@@ -119,32 +134,45 @@ const ManageTeams = () => {
     }
   };
 
-const handleDeleteTeam = async (teamName) => {
-  // Find the team that is being deleted
-  const teamToDelete = teams.find(team => team.teamName === teamName);
-  const studentsInDeletedTeam = teamToDelete ? teamToDelete.students : [];
-
-  // Remove the deleted team from the teams list in state
-  const updatedTeams = teams.filter(team => team.teamName !== teamName);
-  setTeams(updatedTeams);
-
-  // Add the students from the deleted team back to the unassigned list
-  const updatedStudents = [...students, ...studentsInDeletedTeam];
-  setStudents(updatedStudents);
-
-  // Also delete the team from the Firebase database
-  const db = getFirestore();
-  const teamRef = doc(db, 'classrooms', className, 'Projects', projectName, 'teams', teamName);
+  const handleDeleteTeam = async (teamName) => {
+    // Find the team that is being deleted
+    const teamToDelete = teams.find(team => team.teamName === teamName);
+    const studentsInDeletedTeam = teamToDelete ? teamToDelete.students : [];
   
-  try {
-    await deleteDoc(teamRef);
-    alert(`Team "${teamName}" deleted successfully!`);
-  } catch (error) {
-    console.error("Error deleting team:", error);
-    alert("Error deleting team.");
-  }
-};
-
+    // Remove the deleted team from the teams list in state
+    const updatedTeams = teams.filter(team => team.teamName !== teamName);
+    setTeams(updatedTeams);
+  
+    // Add the students from the deleted team back to the unassigned list
+    const updatedStudents = [...students, ...studentsInDeletedTeam];
+    setStudents(updatedStudents);
+  
+    // Also delete the team from the Firebase database
+    const db = getFirestore();
+    const teamRef = doc(db, 'classrooms', className, 'Projects', projectName, 'teams', teamName);
+  
+    try {
+      await deleteDoc(teamRef);
+      addMessage("success", `Team "${teamName}" deleted successfully!`); 
+    } catch (error) {
+      console.error("Error deleting team:", error);
+      addMessage("error", "Error deleting team.")
+    }
+  };
+   
+  const confirmDeleteTeam = async () => {
+    try {
+      // Call handleDeleteTeam and pass the teamToDelete value
+      await handleDeleteTeam(teamToDelete);
+  
+      // Close the modal
+      setShowDeleteModal(false);
+    } catch (error) {
+      console.error("Error confirming delete:", error);
+      addMessage("error", "An error occurred while deleting the team.");
+    }
+  };
+  
   const handleRemoveStudent = (email, teamName) => {
     const updatedTeams = teams.map(team => {
       if (team.teamName === teamName) {
@@ -155,7 +183,7 @@ const handleDeleteTeam = async (teamName) => {
       }
       return team;
     });
-
+  
     const studentToRemove = teams
       .flatMap(team => team.students)
       .find(student => student.email === email);
@@ -168,8 +196,11 @@ const handleDeleteTeam = async (teamName) => {
         return prevStudents;
       });
     }
-  
     setTeams(updatedTeams);
+  };
+  
+  const cancelDelete = () => {
+    setShowDeleteModal(false); // Close the modal if the action is cancelled
   };
 
   return (
@@ -190,6 +221,31 @@ const handleDeleteTeam = async (teamName) => {
           </button>
         </div>
       </div>
+      {/* Delete Confirmation Modal */}
+{showDeleteModal && (
+  <div className="modal fade show d-block" tabIndex="-1" style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
+    <div className="modal-dialog">
+      <div className="modal-content">
+        <div className="modal-header">
+          <h5 className="modal-title">Confirm Deletion</h5>
+          <button type="button" className="btn-close" onClick={() => setShowDeleteModal(false)}></button>
+        </div>
+        <div className="modal-body">
+          <p>Are you sure you want to delete the team <strong>{teamToDelete}</strong>? This action cannot be undone.</p>
+        </div>
+        <div className="modal-footer">
+          <button type="button" className="btn btn-secondary" onClick={() => setShowDeleteModal(false)}>
+            Cancel
+          </button>
+          <button type="button" className="btn btn-danger" onClick={confirmDeleteTeam}>
+            Yes, Delete
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+)}
+
       <div className="manage-teams-container">
         <div className="manage-unassigned-students">
           <h4>Unassigned Students</h4>
@@ -221,11 +277,15 @@ const handleDeleteTeam = async (teamName) => {
               <h4 className="team-header">
                 {team.teamName}
                 <button
-                  className="btn btn-danger btn-sm ml-2"
-                  onClick={() => handleDeleteTeam(team.teamName)}
-                >
-                  Deleted Team
-                </button>
+                className="btn btn-danger btn-sm ml-2"
+                onClick={() => {
+                  setTeamToDelete(team.teamName);  // Set the team to delete
+                  setShowDeleteModal(true);  // Show the modal
+                }}
+              >
+                Delete Team
+              </button>
+
               </h4>
               <ul className="manage-student-list">
                 {team.students.length === 0 ? (
