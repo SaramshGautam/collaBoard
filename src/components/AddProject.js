@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
-
+import { useFlashMessage } from '../FlashMessageContext'; // Import flash message hook
+ 
 const AddProject = () => {
+  const addMessage = useFlashMessage(); // Use flash message function
   const { className } = useParams();
   const navigate = useNavigate();
   const [projectName, setProjectName] = useState('');
@@ -27,7 +29,6 @@ const AddProject = () => {
     formData.append('description', description);
     formData.append('due_date', dueDate);
     if (teamFile) formData.append('team_file', teamFile);
-
     formData.append("role", role);
     formData.append("userEmail", userEmail);
 
@@ -40,7 +41,7 @@ const AddProject = () => {
       });
 
       setErrorMessage('');
-      alert(response.data.message);
+      addMessage('success', `"${projectName}" is created successfully!`); // Set flash message
       navigate(`/classroom/${className}`);
     } catch (error) {
       setErrorMessage(error.response?.data?.message || 'Something went wrong!');
