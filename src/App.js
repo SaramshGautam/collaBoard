@@ -17,6 +17,8 @@ import EditStudent from './components/EditStudent';
 import ManageStudent from './components/ManageStudent'; 
 import EditClassroom from './components/EditClassroom'; 
 import Team from './components/Team';
+import About from "./components/About"; 
+import Contact from "./components/Contact"; 
 import "./style.css";
 
 // Firebase imports
@@ -72,12 +74,12 @@ const CustomToolbar = (props) => {
       {/* Group Tool */}
       {/* <TldrawUiMenuItem {...tools["group"]} isSelected={isGroupToolSelected} /> */}
 
-      {/* Collection Tool with Custom Icon */}
+      {/* Collection Tool with Custom Icon 
       <button
         onClick={() => tools["collection"].onSelect()}
         style={{
-          // background: isCollectionToolSelected ? "#e6f7ff" : "transparent", // Highlight when selected
-          // border: isCollectionToolSelected ? "2px solid #1890ff" : "none", // Add border when selected
+           background: isCollectionToolSelected ? "#e6f7ff" : "transparent", // Highlight when selected
+           border: isCollectionToolSelected ? "2px solid #1890ff" : "none", // Add border when selected
           padding: "8px",
           borderRadius: "4px", // Match the default button style
           cursor: "pointer",
@@ -89,8 +91,8 @@ const CustomToolbar = (props) => {
             fill: isCollectionToolSelected ? "#1890ff" : "none", // Change icon color when selected
             stroke: isCollectionToolSelected ? "#1890ff" : "black",
           }}
-        />{" "} */}
-      </button>
+        />{" "} 
+      </button>*/}
       <DefaultToolbarContent />
     </DefaultToolbar>
   );
@@ -149,6 +151,8 @@ const App = () => {
 
   return (
 <Routes>
+<Route path="/about" element={<><Navbar /><About/></>} />
+<Route path="/contact" element={<><Navbar /><Contact/></>} />
   {/* Login Page */}
   <Route path="/" element={<LoginPage onLogin={googleLogin} />} />
   
