@@ -76,7 +76,10 @@ const Classroom = () => {
             projects.map((project, index) => (
               <div key={index} className="project-card" onClick={() => navigate(`/classroom/${className}/project/${project.projectName}`)}>
                 <h5>{project.projectName}</h5>
-                <p className="project-description"><strong>Description:</strong> {project.description}</p>
+                <p className="project-description">
+  <strong>Description:</strong> {project.description.length > 100 ? `${project.description.substring(0, 100)}...` : project.description}
+</p>
+
                 <p className="project-due-date"><strong>Due Date:</strong> {new Date(project.dueDate).toLocaleDateString()}</p>
               </div>
             ))
