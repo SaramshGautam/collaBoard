@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { useFlashMessage } from '../FlashMessageContext';
 
 const EditProject = () => {
   const { className, projectName } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
+  const addMessage = useFlashMessage();
 
   const initialProjectDetails = location.state?.projectDetails || {
     description: '',
@@ -24,6 +26,8 @@ const EditProject = () => {
     teamFile: null,
   });
 
+  const [showDeleteModal, setShowDeleteModal] = useState(false); // State for delete confirmation modal
+
   const handleChange = (e) => {
     const { name, value, files } = e.target;
     setFormData((prevData) => ({
@@ -34,7 +38,7 @@ const EditProject = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-
+  
     const form = new FormData();
     form.append('project_name', formData.projectName);
     form.append('description', formData.description);
@@ -42,64 +46,65 @@ const EditProject = () => {
     if (formData.teamFile) {
       form.append('team_file', formData.teamFile);
     }
-
-    fetch(`/api/classroom/${className}/project/${projectName}/edit`, {
+  
+    fetch(`http://localhost:5000/api/classroom/${className}/project/${projectName}/edit`, {
       method: 'POST',
       body: form,
     })
-      .then((response) => {
-        if (response.ok) {
-          navigate(`/classroom/${className}/project/${projectName}`);
+      .then(async (response) => {
+        const data = await response.json();
+        if (!response.ok) {
+          addMessage('danger', data.message);
         } else {
-          alert('Failed to update project. Please try again.');
+          addMessage('success', data.message);
+          navigate(`/classroom/${className}/project/${projectName}`);
         }
       })
       .catch((error) => {
         console.error('Error updating project:', error);
-        alert('An error occurred. Please try again.');
+        addMessage('danger', 'An error occurred. Please try again.');
       });
   };
+  
 
   // **Delete Project Function**
-  const handleDelete = async () => {
-    const confirmDelete = window.confirm(
-      "Are you sure you want to delete this project? This action cannot be undone."
-    );
-    if (!confirmDelete) return;
-  
+  const confirmDelete = async () => {
     try {
-      const response = await fetch(`/api/classroom/${className}/project/${projectName}/delete`, {
+      // Update the URL to point to the backend (localhost:5000)
+      const response = await fetch(`http://localhost:5000/api/classroom/${className}/project/${projectName}/delete`, {
         method: 'DELETE',
       });
   
       if (response.ok) {
-        navigate(`/classroom/${className}`); // Navigate back to the classroom after deletion
+        addMessage('success', `Project '${formData.projectName}' deleted successfully!`);
+        navigate(`/classroom/${className}`);
       } else {
-        alert('Failed to delete project. Please try again.');
+        addMessage('danger', 'Failed to delete project. Please try again.');
       }
     } catch (error) {
       console.error('Error deleting project:', error);
-      alert('An error occurred while deleting the project.');
+      addMessage('danger', 'An error occurred while deleting the project.');
     }
-  };  
-
+  };
+  
   return (
     <div className="container form-container mt-4">
       <h1 className="form-title">Edit Project</h1>
 
       <form onSubmit={handleSubmit} encType="multipart/form-data">
-        <div className="mb-3">
-          <label htmlFor="projectName" className="form-label">Project Name</label>
-          <input
-            type="text"
-            id="projectName"
-            name="projectName"
-            className="form-control"
-            value={formData.projectName}
-            onChange={handleChange}
-            required
-          />
-        </div>
+      <div className="mb-3">
+      <label htmlFor="projectName" className="form-label">Project Name</label>
+      <input
+        type="text"
+        id="projectName"
+        name="projectName"
+        className="form-control"
+        value={formData.projectName}
+        readOnly
+        title="Project name is not editable"
+        style={{ backgroundColor: "#e9ecef", cursor: "not-allowed" }}
+      />
+    </div>
 
         <div className="mb-3">
           <label htmlFor="description" className="form-label">Project Description</label>
@@ -152,12 +157,37 @@ const EditProject = () => {
           <button
             type="button"
             className="btn delete-btn"
-            onClick={handleDelete}
+            onClick={() => setShowDeleteModal(true)}
           >
             <i className="bi bi-trash"></i> Delete Project
           </button>
         </div>
       </form>
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="modal fade show d-block" tabIndex="-1" style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
+          <div className="modal-dialog">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">Confirm Deletion</h5>
+                <button type="button" className="btn-close" onClick={() => setShowDeleteModal(false)}></button>
+              </div>
+              <div className="modal-body">
+                <p>Are you sure you want to delete the project <strong>{formData.projectName}</strong>? This action cannot be undone.</p>
+              </div>
+              <div className="modal-footer">
+                <button type="button" className="btn btn-secondary" onClick={() => setShowDeleteModal(false)}>
+                  Cancel
+                </button>
+                <button type="button" className="btn btn-danger" onClick={confirmDelete}>
+                  Yes, Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
