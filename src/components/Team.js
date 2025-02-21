@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getFirestore, doc, getDoc, collection, getDocs } from 'firebase/firestore';
+import { getFirestore, doc, getDoc } from 'firebase/firestore';
 
 const Team = () => {
   const { className, projectName, teamName } = useParams();
@@ -36,16 +36,11 @@ const Team = () => {
           const teamData = teamSnapshot.data();
   
           // Loop through each LSUID in the team
-          for (const [LSUID, _] of Object.entries(teamData)) {
-            // Fetch student details from the 'users' collection
-            const userRef = doc(db, 'users', LSUID);
-            const userSnapshot = await getDoc(userRef);
-  
-            if (userSnapshot.exists()) {
-              const userData = userSnapshot.data();
+          for (const [LSUID, userData] of Object.entries(teamData)) {
+            if (userData && userData.name) {
               members.push({
                 LSUID: LSUID,
-                name: userData.name || "Unknown Name", // Get name in "Last, First" format
+                name: userData.name,  // name should be available here
               });
             } else {
               members.push({ LSUID: LSUID, name: "Unknown Name" });
@@ -86,26 +81,19 @@ const Team = () => {
           <h3 className="section-title mb-3">Project: {projectName}</h3>
 
           <div className="team-members mb-4">
-  <h5 className="mb-3">Team Members</h5>
-  {teamMembers.length > 0 ? (
-    <ul>
-      {teamMembers.map((member, idx) => (
-        <li key={idx}>
-          <strong>
-            {typeof member.name === "object"
-              ? `${member.name.lastName}, ${member.name.firstName}`
-              : member.name}
-          </strong>
-          
-        </li>
-      ))}
-    </ul>
-  ) : (
-    <p>No members in this team.</p>
-  )}
-</div>
-
-
+            <h5 className="mb-3">Team Members</h5>
+            {teamMembers.length > 0 ? (
+              <ul>
+                {teamMembers.map((member, idx) => (
+                  <li key={idx}>
+                    <strong>{member.name}</strong>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p>No members in this team.</p>
+            )}
+          </div>
 
           {/* Whiteboard Button */}
           <div className="action-buttons mb-4">
@@ -118,13 +106,13 @@ const Team = () => {
           </div>
 
           <div className="action-buttons mb-4">
-          <button
-            type="button"
-            className="btn back-btn"
-            onClick={() => navigate(`/classroom/${className}/project/${projectName}`)}
-          >
-            <i className="bi bi-arrow-left me-2"></i> Back to Project
-          </button>
+            <button
+              type="button"
+              className="btn back-btn"
+              onClick={() => navigate(`/classroom/${className}/project/${projectName}`)}
+            >
+              <i className="bi bi-arrow-left me-2"></i> Back to Project
+            </button>
           </div>
         </>
       ) : (
