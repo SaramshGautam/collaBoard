@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useFlashMessage } from '../FlashMessageContext';
 
 const AddStudent = () => {
   const { className } = useParams(); 
@@ -10,6 +11,7 @@ const AddStudent = () => {
   const [lsuId, setLsuId] = useState('');  // New state for LSU ID
   const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate(); // Use navigate hook
+  const addMessage = useFlashMessage(); 
 
   const handleFirstNameChange = (event) => setFirstName(event.target.value);
   const handleLastNameChange = (event) => setLastName(event.target.value);
@@ -31,7 +33,8 @@ const AddStudent = () => {
     try {
       // Make sure the URL is correctly formed
       await axios.post(`http://localhost:5000/api/classroom/${className}/add_student`, studentData);
-      alert(`Student ${firstName} ${lastName} added successfully!`);
+      addMessage('success', `Added '${firstName} ${lastName}' successfully!`); // Set flash message
+      navigate(`/classroom/${className}/manage-students`);
     } catch (error) {
       console.error('Error adding student:', error);
     } finally {
