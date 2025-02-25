@@ -30,6 +30,8 @@ const Project = () => {
             description: projectData.description || 'No description provided.',
             dueDate,
           });
+        } else {
+          console.warn('No project data found.');
         }
     
         // Fetch teams
@@ -41,30 +43,37 @@ const Project = () => {
           const teamData = teamDoc.data();
           console.log(`Raw Team Data for ${teamDoc.id}:`, teamData);
     
-          const teamMembers = Object.keys(teamData); // Extract LSUIDs as keys
+          // Extract team member identifiers (emails)
+          const teamMembers = Object.keys(teamData);
           teamsData.push({
             name: teamDoc.id,
             members: teamMembers,
           });
         });
     
+        console.log('Fetched Teams Data:', teamsData);
         setTeams(teamsData);
-        console.log('Fetched Teams:', teamsData);
     
-        // 🔹 Check student team assignment using LSUID instead of email
+        // 🔹 Check student team assignment using email instead of LSUID
         if (role === 'student') {
-          const studentLSUID = localStorage.getItem('LSUID'); // Use LSUID now
-          console.log('Retrieved LSUID from localStorage:', studentLSUID);
+          // Retrieve student email using the correct key from localStorage
+          const studentEmail = localStorage.getItem('userEmail');
+          console.log('Retrieved student email from localStorage:', studentEmail);
     
-          if (studentLSUID) {
+          if (studentEmail) {
+            // Log each team and its members
+            teamsData.forEach((team) => {
+              console.log(`Team "${team.name}" members:`, team.members);
+            });
+    
             const assignedTeam = teamsData.find((team) =>
-              team.members.includes(studentLSUID) // Match LSUID, not email
+              team.members.includes(studentEmail)
             );
     
             console.log('Assigned Team:', assignedTeam);
             setStudentTeamAssigned(assignedTeam ? assignedTeam.name : null);
           } else {
-            console.error('LSUID not found in localStorage.');
+            console.error('Email not found in localStorage.');
           }
         }
       } catch (error) {
@@ -91,7 +100,7 @@ const Project = () => {
 
   return (
     <>
-      <h1 className="project-title">{projectName}</h1>
+      <h1 className="project-title">Project: {projectName}</h1>
       <p><strong>Description:</strong> {projectDetails.description}</p>
       <p><strong>Due Date:</strong> {projectDetails.dueDate}</p>
 
@@ -150,7 +159,7 @@ const Project = () => {
         <p className="no-teams-message">No teams available.</p>
       )}
 
-      <Link to={`/classroom/${className}`} className="btn back-btn" >
+      <Link to={`/classroom/${className}`} className="btn back-btn">
         <i className="bi bi-arrow-left me-2"></i> Back to Classroom
       </Link>
     </>
