@@ -1,15 +1,18 @@
 import React, { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 import { useFlashMessage } from '../FlashMessageContext'; // Import flash message hook
  
 const AddProject = () => {
-  const addMessage = useFlashMessage(); // Use flash message function
+  const addMessage = useFlashMessage();
   const { className } = useParams();
   const navigate = useNavigate();
   const [projectName, setProjectName] = useState('');
   const [description, setDescription] = useState('');
-  const [dueDate, setDueDate] = useState('');
+  // Use a Date object for dueDate
+  const [dueDate, setDueDate] = useState(new Date());
   const [teamFile, setTeamFile] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
@@ -27,7 +30,8 @@ const AddProject = () => {
     const formData = new FormData();
     formData.append('project_name', projectName);
     formData.append('description', description);
-    formData.append('due_date', dueDate);
+    // Convert dueDate to ISO string for backend processing
+    formData.append('due_date', dueDate.toISOString());
     if (teamFile) formData.append('team_file', teamFile);
     formData.append("role", role);
     formData.append("userEmail", userEmail);
@@ -41,7 +45,7 @@ const AddProject = () => {
       });
 
       setErrorMessage('');
-      addMessage('success', `"${projectName}" is created successfully!`); // Set flash message
+      addMessage('success', `"${projectName}" is created successfully!`);
       navigate(`/classroom/${className}`);
     } catch (error) {
       setErrorMessage(error.response?.data?.message || 'Something went wrong!');
@@ -53,7 +57,6 @@ const AddProject = () => {
   return (
     <div className="container form-container mt-4">
       <h1 className="form-title">Add New Project</h1>
-
       <form onSubmit={handleSubmit} encType="multipart/form-data">
         <div className="mb-3">
           <label htmlFor="project_name" className="form-label">Project Name</label>
@@ -79,16 +82,18 @@ const AddProject = () => {
           />
         </div>
 
-        <div className="mb-3">
-          <label htmlFor="due_date" className="form-label">Due Date</label>
-          <input
-            type="datetime-local"
-            id="due_date"
+        <div className="mb-3 d-flex align-items-center">
+          <label htmlFor="due_date" className="form-label me-3">Due Date &amp; Time:</label>
+          <DatePicker
+            selected={dueDate}
+            onChange={(date) => setDueDate(date)}
+            showTimeSelect
+            timeIntervals={15}
+            dateFormat="Pp"
+            minDate={new Date()}
             className="form-control"
-            value={dueDate}
-            onChange={(e) => setDueDate(e.target.value)}
+            id="due_date"
             required
-            min={new Date().toISOString().slice(0, 16)}
           />
         </div>
 
