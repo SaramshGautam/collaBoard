@@ -116,7 +116,7 @@ const AddStudent = () => {
             ) : (
               <i className="bi bi-plus-circle"></i>
             )}
-            <span>{isSubmitting ? 'Adding...' : 'Add Student'}</span>
+            <span>{isSubmitting ? 'Adding...' : ' Add Student'}</span>
           </button>
           <button type="button" className="btn back-btn" 
             onClick={handleBackClick} >
