@@ -1,8 +1,8 @@
 body {
-    background-color: #f8f9fa !important; /* Use a slightly off-white background */
-    padding: 0 20px;
+  background-color: #f8f9fa !important;
+  padding: 0 20px;
+  margin-top: 1px;
 }
-
   .classrooms-list {
     display: flex;
     flex-wrap: wrap;
@@ -182,6 +182,7 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
+    margin-bottom: 0;
     padding: 20px;
     width: 100%;
   }
@@ -364,103 +365,47 @@ body {
     background-color: #b8b8b8 !important; /* Darker Ash for contrast */
     color: #333 !important; /* Darker text */
   }
-  /* Edit Button - Dark Ash */
-.btn-edit {
-    background-color: #5a5a5a; /* Dark Ash */
-    color: white;
-    border: 1px solid #444; /* Slightly darker border */
-    transition: background-color 0.2s ease-in-out, transform 0.1s ease-in-out;
-  }
-  
-  /* Hover Effect - Slightly Darker Ash */
-  .btn-edit:hover {
-    background-color: #494949; /* Darker Ash */
-    border-color: #3a3a3a;
-    
-  }
-  
-  /* Click (Active) Effect - Remove Blue Border */
-  .btn-edit:active {
-    background-color: #3a3a3a !important; /* Even Darker Ash */
-    border-color: #2a2a2a !important;
-    transform: scale(0.98); /* Slight press effect */
-    outline: none !important; /* Remove default focus */
-    box-shadow: none !important; /* Remove blue outline */
-    color: white;
-  }
-  
-  /* Remove blue focus outline after clicking */
-  .btn-edit:focus {
-    outline: none !important;
-    box-shadow: none !important;
-    color: white;
-  }
-  
-  /* --------Flash message styles---------- */
 
-  /* Error message */
-  .alert-danger {
-    background-color: #f8d7da;
-    color: #721c24;
-    padding: 10px;
-    border-radius: 5px;
-    margin-bottom: 20px;
-  }
+/* -------- Flash Message Styles -------- */
+.flash-message {
+  transition: opacity 0.5s ease-out, transform 0.3s ease-in-out; /* Smooth fade and slide */
+  opacity: 1;
+}
 
-  .mb-3 {
-    margin-bottom: 15px;
-  }
-  
-  /* Button group */
-  .d-flex {
-    gap: 15px;
-  }
+.flash-message-enter {
+  transform: translateX(100%);
+  opacity: 0;
+}
 
-  .bi {
-    font-size: 1.1rem;
-    margin-right: 5px;
-  }
-   
+.flash-message-exit {
+  transform: translateX(100%);
+  opacity: 0;
+}
 
-  /* alerts */
-  .fade-out {
-    opacity: 0;
-    transition: opacity 0.5s ease-in-out;
-  }
-  
-  .alert-wrapper {
-    position: fixed;
-    top: 80px;
-    right: 20px;
-    z-index: 1050;
-    max-width: 300px;
-  }
-  
-  .alert {
-    font-size: 0.875rem;
-    padding: 0.5rem 1rem;
-    border-radius: 0.25rem;
-    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
-    background-color: #7aa584; 
-    color: white;
-  }
-  
-  .alert.error {
-    background-color: #dc3545;
-  }
-  
-  .alert .btn-close {
-    font-size: 0.6rem;
-    padding: 0.2rem;
-    margin: -0.2rem;
-    border: none;
-    box-shadow: none;
-    color: #6c757d;
-  }
-  
-  .alert .btn-close:hover {
-    color: #495057;
-  }
+/* Success message */
+.flash-message-success {
+  background-color: 	#69ac69; /* Green color */
+  color: white;
+}
+
+/* Danger message */
+.flash-message-danger {
+  background-color: 	#d9534f; /* Red color */
+  color: white;
+}
+
+/* Warning message */
+.flash-message-warning {
+  background-color: #f0ad4e; /* Yellow color */
+  color: black;
+}
+
+/* Info message */
+.flash-message-info {
+  background-color: #17a2b8; /* Blue color */
+  color: white;
+}
+
 
   /* --------Login Page---------- */
   /* Page Background */
@@ -499,35 +444,6 @@ body.login-page {
   font-weight: bold;
   color: #333;
   margin-bottom: 1rem;
-}
-
-/* Google Login Button */
-.googlebutton {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.75rem;
-  font-size: 1rem;
-  font-weight: 600;
-  border-radius: 8px;
-  border: none;
-  color: #333;
-  background-color: #fff;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
-}
-
-.googlebutton:hover {
-  transform: scale(1.05);
-  background-color: #f1f1f1;
-}
-
-/* Google Icon */
-.googlebutton svg {
-  height: 24px;
-  margin-right: 8px;
 }
 
 /* --------Home / Dashboard---------- */
@@ -638,16 +554,68 @@ body.login-page {
   padding: 0;
 }
 
-a  /* --------Team pages---------- */
+/* --------Team pages---------- */
+/* Team Members Card */
+.team-members-card {
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 10px 15px; /* Reduced padding for a smaller card */
+  background-color: #fff;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  max-width: 600px; /* Set a maximum width for the card */
 
-  .team-container {
-    width: 100%;
-    max-width: 800px; /* Adjust as needed */
-    padding: 20px;
-    margin-left: 0; /* Aligns to the left */
 }
 
-  
+/* Team Members List */
+.member-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+/* Member Item */
+.member-item {
+  padding: 8px 0; /* Reduced padding */
+  border-bottom: 1px solid #f0f0f0;
+}
+
+/* Header row for the table */
+.member-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center; /* Ensure alignment of items */
+  margin-bottom: 10px; /* Space below the header */
+}
+
+/* Member row */
+.member-row span {
+  flex: 1;
+  font-size: 14px; /* Smaller font size for better alignment */
+}
+
+/* Last Access Column */
+.last-access-header {
+  text-align: left;
+  font-weight: bold;
+}
+
+/* Style for the member name */
+.member-name {
+  text-align: left;
+  font-weight: normal;
+}
+
+/* Title for Team Members */
+.member-title{
+  font-weight: bold; /* Bold Team Members title */
+}
+
+/* Last Access Time */
+.last-access-time {
+  text-align: left;
+  font-size: 13px; /* Smaller font size for last access time */
+}
+
   /* --------Form Pages---------- */
   /* Input fields */
   .form-control {
@@ -836,13 +804,97 @@ a  /* --------Team pages---------- */
     font-size: 18px;
     color: #495057;
   }
-
-  /* --------Project Page---------- */
-  .project-container {
-    padding: 20px; /* Adds padding around the content */
-    max-width: 80%; /* Ensures it doesn't stretch too wide */
-    margin: 0 auto; /* Centers it in the page */
+  
+/* --------Project Page---------- */
+.classroom-page {
+  text-align: center;
+  position: relative;
+  padding: 20px;
 }
+
+/* Project Title */
+.project-title {
+  font-size: 26px;
+  font-weight: bold;
+  color: #415b8b;
+  margin-bottom: 15px;
+}
+
+/* Project Info Section */
+.project-info {
+  display: flex;
+  gap: 2rem;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+  justify-content: center;
+}
+
+.info-item {
+  flex: 1;
+  min-width: 250px;
+}
+
+.info-item p {
+  margin: 0.5rem 0 0;
+  font-size: 1rem;
+}
+
+/* Teams Section */
+.teams-section {
+  margin-top: 20px;
+}
+
+.teams-section h2 {
+  margin-bottom: 20px;
+}
+
+/* Teams List as Grid */
+.teams-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 1rem;
+  justify-items: center;
+}
+
+/* Team Card Styling */
+.team-card {
+  width: 100%;
+  max-width: 300px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  cursor: pointer;
+}
+
+.team-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Card Body */
+.team-card .card-body {
+  padding: 15px;
+}
+
+/* Card Title */
+.team-card .card-title {
+  font-size: 20px;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+/* Default card-body size */
+.team-card .card-body {
+  padding: 15px;
+}
+
+/* Increase the card-body size for students */
+.team-card.student .card-body {
+  padding: 10px; /* Adjust the padding to make it bigger */
+  height: auto; /* Ensure the height adjusts based on content */
+}
+
 
   /* --------Manage Students Page---------- */
   .card.border-dark {
@@ -903,221 +955,258 @@ a  /* --------Team pages---------- */
 
 /* --------Buttons---------- */
 
-  /* General Button Styling */
-.btn {
-    padding: 10px 15px;
-    font-size: 14px;
-    font-weight: 600;
-    border-radius: 5px;
-    border: none;
-    cursor: pointer;
-    transition: all 0.3s ease;
-  }
-  
-  /* Action Buttons (Primary Buttons) */
-  .action-btn {
-    display: inline-block;
-    outline: 0;
-    cursor: pointer;
-    text-align: center;
-    border: 0;
-    padding: 7px 16px;
-    min-height: 36px;
-    min-width: 36px;
-    color: #ffffff;
-    background-color: rgb(52, 58, 64);
-    border-radius: 4px;
-    font-weight: 500;
-    font-size: 14px;
-    box-shadow: rgba(0, 0, 0, 0.05) 0px 1px 0px 0px, rgba(0, 0, 0, 0.2) 0px -1px 0px 0px inset;
-  }
-  
-  .action-btn:hover {
-    background-color: rgb(31, 33, 35);
-    color: white;
-  }
-
-  .action-btn:active {
-    background-color: rgb(20, 22, 24); /* Slightly darker */
-    color: white; /* Keep text color unchanged */
+/* Base button styles */
+.btn,
+.action-btn,
+.back-btn,
+.delete-btn,
+.btn-view,
+.btn-whiteboard,
+.btn-edit {
+  padding: 10px 15px;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 5px;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+  color: white !important;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
 }
 
-/* Back Button Click Effect */
-.back-btn:active {
-    background-color: rgb(40, 40, 41); /* Slightly darker */
-    color: white; /* Keep text color unchanged */
-}
-  
-  /* Back Buttons (Secondary Buttons) */
-  .back-btn {
-    display: inline-block;
-    outline: 0;
-    cursor: pointer;
-    text-align: center;
-    border: 0;
-    padding: 7px 16px;
-    min-height: 36px;
-    min-width: 36px;
-    color: #ffffff;
-    background-color: rgb(134, 136, 138);
-    border-radius: 4px;
-    font-weight: 500;
-    font-size: 14px;
-    box-shadow: rgba(0, 0, 0, 0.05) 0px 1px 0px 0px, rgba(0, 0, 0, 0.2) 0px -1px 0px 0px inset;
-  }
-  
-  .back-btn:hover {
-    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 8%);
-    background-color: rgb(57, 57, 58);
-    color: #ffffff;
-  }
-  
-  /* Disabled Button */
-  .btn:disabled {
-    background-color: #b0b0b0;
-    cursor: not-allowed;
-  }
-  
-  /* Delete Button */
-  .delete-btn {
-    background: #dc3545;
-    color: white;
-    padding: 10px 15px;
-    font-size: 14px;
-    border-radius: 5px;
-    transition: all 0.3s ease-in-out;
-  }
-  
-  .delete-btn:hover {
-    background: #c82333;
-  }
-
-  .delete-btn:active {
-    background: #b21f2d; /* Slightly darker red */
-    color: white; /* Keep text color unchanged */
-}
-  /* Align button group to the left */
-.button-group {
-    display: flex;
-    justify-content: flex-start; /* Aligns buttons to the left */
-    gap: 10px; /* Adds spacing between buttons */
-    margin-bottom: 15px; /* Adds spacing below the buttons */
+/* Specific default background colors */
+.action-btn {
+  background-color: #3d3d3d !important; /* Dark ash color */
+  color: white !important;
+  border: none;
 }
 
-/* Ensure buttons don't turn white on click, only get slightly darker */
-.action-btn:active {
-    background-color: rgb(20, 22, 24); /* Slightly darker */
-    color: white; /* Keep text color unchanged */
+.back-btn {
+  background-color: rgb(134, 136, 138);
 }
 
-.back-btn:active {
-    background-color: rgb(40, 40, 41); /* Slightly darker */
-    color: white; /* Keep text color unchanged */
+.delete-btn {
+  background: #dc3545;
 }
 
-.delete-btn:active {
-    background: #b21f2d; /* Slightly darker red */
-    color: white; /* Keep text color unchanged */
-}
-button, .btn, .action-btn, .back-btn, .delete-btn {
-    -webkit-tap-highlight-color: transparent; /* Prevents default click effect */
-    user-select: none; /* Prevents text selection on click */
-}
-
-.action-btn:focus, .back-btn:focus, .delete-btn:focus {
-    background-color: inherit !important; /* Keep the same background color */
-    outline: none !important; /* Remove focus outline */
-    box-shadow: none !important; /* Prevent unwanted styling */
-}
-.action-btn:active {
-    background-color: rgb(20, 22, 24) !important; /* Darker shade */
-    color: white !important;
-}
-
-.back-btn:active {
-    background-color: rgb(40, 40, 41) !important;
-    color: white !important;
-}
-
-.delete-btn:active {
-    background: #b21f2d !important;
-    color: white !important;
-}
-
-.spinner-border {
-    width: 16px;
-    height: 16px;
-  }
-  
-  .row {
-    margin-bottom: 10px;
-  }
-
-  .back-btn {
-    display: block;
-    text-align: left;
-    width: fit-content; /* Ensures the button does not stretch */
-}
-
-/* View Team Button */
 .btn-view {
-    background-color: rgb(52, 58, 64); /* Dark gray */
-    color: white;
-    padding: 7px 12px;
-    font-size: 14px;
-    font-weight: 500;
-    border-radius: 4px;
-    border: none;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    text-decoration: none; /* Removes underline for links */
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
+  background-color: rgb(52, 58, 64);
 }
 
-.btn-view:hover {
-    background-color: rgb(31, 33, 35);
-    color: white;
-}
-
-.btn-view:active {
-    background-color: rgb(20, 22, 24);
-    color: white;
-}
-
-/* Whiteboard Button */
 .btn-whiteboard {
-    background-color: #5f666f; /* Blue color */
-    color: white;
-    padding: 7px 12px;
-    font-size: 14px;
-    font-weight: 500;
-    border-radius: 4px;
-    border: none;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
+  background-color: #5f666f;
+}
+
+.btn-edit {
+  background-color: #5a5a5a;
+  border: 1px solid #444;
+  font-size: 0.85rem;
+  padding: 4px 8px;
+  border-radius: 4px;
+  min-width: 60px;
+}
+
+/* Hover effects (slightly darker) */
+.action-btn:hover,
+.btn-view:hover {
+  background-color: rgb(31, 33, 35) !important; /* Slightly darker for hover effect */
+  }
+
+
+.back-btn:hover {
+  background-color: rgb(106, 106, 108);
+}
+
+.delete-btn:hover {
+  background: #c82333;
 }
 
 .btn-whiteboard:hover {
-    background-color: #3b434b; /* Darker blue */
-    color: white;
+  background-color: #3b434b;
+}
+
+.btn-edit:hover {
+  background-color: #494949;
+  border-color: #3a3a3a;
+}
+
+/* Active state (for click or long press) with slight scale down */
+.action-btn:active {
+  background-color: rgb(20, 22, 24) !important;
+  transform: scale(0.97);
+}
+
+.back-btn:active {
+  background-color: rgb(81, 81, 83) !important;
+  transform: scale(0.97);
+}
+
+.delete-btn:active {
+  background: #b21f2d !important;
+  transform: scale(0.97);
+}
+
+.btn-view:active {
+  background-color: rgb(20, 22, 24) !important;
+  transform: scale(0.97);
 }
 
 .btn-whiteboard:active {
-    background-color: #393e44; /* Even darker blue */
-    color: white;
+  background-color: #393e44 !important;
+  transform: scale(0.97);
 }
 
-/* about Page */
+.btn-edit:active {
+  background-color: #3a3a3a !important;
+  border-color: #2a2a2a !important;
+  transform: scale(0.96);
+}
+
+/* Remove focus outlines */
+.action-btn:focus,
+.back-btn:focus,
+.delete-btn:focus,
+.btn-view:focus,
+.btn-whiteboard:focus,
+.btn-edit:focus {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.button-group {
+  display: flex;
+  justify-content: flex-start; 
+  gap: 10px;                 
+  margin-bottom: 15px;
+  padding: 10px 10px 10px 0;    
+}
+
+.back-btn {
+  display: block;          /* Make it a block-level element */
+  text-align: left;        /* Align the content inside the button to the left */
+  width: fit-content;       /* Only take up as much width as necessary */
+  margin-left: 0;          /* Ensure there’s no extra left margin */
+}
+
+/* Target the delete button icon inside a small button */
+.btn.btn-sm i.bi-x-circle {
+  font-size: 1.2rem; /* Default larger size */
+  transition: transform 0.1s ease;
+}
+
+/* Scale the icon down on hover or active (click) */
+.btn.btn-sm:hover i.bi-x-circle,
+.btn.btn-sm:active i.bi-x-circle {
+  transform: scale(0.9);
+}
+
+/* Remove focus outline (red box) when the button is focused or active */
+.btn.btn-sm:focus,
+.btn.btn-sm:active {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* Button loading state */
+.btn.loading,
+.action-btn.loading,
+.back-btn.loading,
+.delete-btn.loading,
+.btn-view.loading,
+.btn-whiteboard.loading,
+.btn-edit.loading {
+  position: relative;
+  color: transparent !important; /* Hide text while keeping button dimensions */
+}
+
+.btn.loading::after,
+.action-btn.loading::after,
+.back-btn.loading::after,
+.delete-btn.loading::after,
+.btn-view.loading::after,
+.btn-whiteboard.loading::after,
+.btn-edit.loading::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 16px;
+  height: 16px;
+  border: 2px solid white;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+  transform: translate(-50%, -50%);
+}
+
+@keyframes spin {
+  0% { transform: translate(-50%, -50%) rotate(0deg); }
+  100% { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+.action-btn:disabled {
+  background-color: #3d3d3d !important; /* Keep dark ash color */
+  opacity: 0.7; /* Slightly faded to indicate disabled state */
+  cursor: not-allowed;
+}
+
+/*  Login Button */
+.googlebutton {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 8px;
+  border: none;
+  color: #333;
+  background-color: #fff;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.googlebutton:hover {
+  transform: scale(1.05);
+  background-color: #f1f1f1;
+}
+
+/* Google Icon */
+.googlebutton svg {
+  height: 24px;
+  margin-right: 8px;
+}
+
+.login-button {
+  display: inline-block;
+  outline: 0;
+  border: 0;
+  cursor: pointer;
+  background-color: white;
+  border-radius: 4px;
+  padding: 8px 16px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #2d3748;
+  border: 1px solid #cbd5e0;
+  line-height: 26px;
+  box-shadow: 0 1px 3px 0 rgba(0,0,0,.1),0 1px 2px 0 rgba(0,0,0,.06);
+
+}
+.login-button:hover {
+  transform: scale(1.05);
+  background-color: #f1f1f1;
+}
+/* -------About Page---------- */
+
 .about-container h2 {
   font-size: 20px;
   color: #071625;
 }
-/* about Page */
+
 .about-container {
   padding: 20px;
   text-align: center;
@@ -1158,8 +1247,8 @@ button, .btn, .action-btn, .back-btn, .delete-btn {
   margin: 5px 0;
 }
 
+/* --------Contact Page---------- */
 
-/*Contact Page */
 .contact-container {
   padding: 20px;
   text-align: center;
