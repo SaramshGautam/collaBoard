@@ -1,24 +1,46 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getFirestore, doc, getDoc } from 'firebase/firestore';
+import { getFirestore, doc, getDoc, setDoc } from 'firebase/firestore';
+
+import { getAuth } from 'firebase/auth';
 
 const Team = () => {
   const { className, projectName, teamName } = useParams();
-  const [teamMembers, setTeamMembers] = useState([]); 
+  const [teamMembers, setTeamMembers] = useState([]);
+  const [lastAccessTimes, setLastAccessTimes] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [userRole, setUserRole] = useState(null);
   const navigate = useNavigate();
+  const db = getFirestore();
+  const auth = getAuth();
 
   useEffect(() => {
+    console.log("Class Name:", className);
+    console.log("Project Name:", projectName);
+    console.log("Team Name:", teamName);
+  
+    const fetchUserRole = async () => {
+      if (auth.currentUser) {
+        const userRef = doc(db, 'users', auth.currentUser.email);
+        const userSnap = await getDoc(userRef);
+        if (userSnap.exists()) {
+          setUserRole(userSnap.data().role);
+        }
+      }
+    };
+  
     const fetchTeamMembers = async () => {
       try {
         setLoading(true);
-        const db = getFirestore();
         const decodedClassName = decodeURIComponent(className);
         const decodedProjectName = decodeURIComponent(projectName);
         const decodedTeamName = decodeURIComponent(teamName);
   
-        // Fetch the team members from the 'teams' subcollection
+        console.log("Decoded Class Name:", decodedClassName);
+        console.log("Decoded Project Name:", decodedProjectName);
+        console.log("Decoded Team Name:", decodedTeamName);
+  
         const teamRef = doc(
           db,
           'classrooms',
@@ -33,20 +55,22 @@ const Team = () => {
   
         if (teamSnapshot.exists()) {
           const members = [];
+          const lastAccessData = {};
           const teamData = teamSnapshot.data();
   
-          // Loop through each LSUID in the team
-          for (const [LSUID, userData] of Object.entries(teamData)) {
+          for (const [email, userData] of Object.entries(teamData)) {
             if (userData && userData.name) {
               members.push({
-                LSUID: LSUID,
-                name: userData.name,  // name should be available here
+                name: userData.name,
+                email: email,
               });
-            } else {
-              members.push({ LSUID: LSUID, name: "Unknown Name" });
+              if (userData.lastAccessed) {
+                lastAccessData[email] = userData.lastAccessed;
+              }
             }
           }
           setTeamMembers(members);
+          setLastAccessTimes(lastAccessData);
         } else {
           setError(`No members found in team "${decodedTeamName}"`);
         }
@@ -58,68 +82,115 @@ const Team = () => {
       }
     };
   
+    fetchUserRole();
     fetchTeamMembers();
-  }, [className, projectName, teamName]);  
+  }, [className, projectName, teamName]);
+  
 
-  const handleWhiteboardClick = () => {
+  const handleWhiteboardClick = async () => {
+    if (userRole === 'student' && auth.currentUser) {
+      const studentEmail = auth.currentUser.email;
+      const decodedClassName = decodeURIComponent(className);
+      const decodedProjectName = decodeURIComponent(projectName);
+      const decodedTeamName = decodeURIComponent(teamName);
+      const teamRef = doc(
+        db,
+        'classrooms',
+        decodedClassName,
+        'Projects',
+        decodedProjectName,
+        'teams',
+        decodedTeamName
+      );
+
+      try {
+        // Fetch team document to get the student's email key
+        const teamSnapshot = await getDoc(teamRef);
+        if (teamSnapshot.exists()) {
+          let teamData = teamSnapshot.data();
+
+          if (teamData.hasOwnProperty(studentEmail)) {
+            await setDoc(teamRef, {
+              [studentEmail]: {
+                ...teamData[studentEmail],
+                lastAccessed: new Date().toISOString(),
+              },
+            }, { merge: true });
+          } else {
+            console.error("Student email not found in team data");
+          }
+        }
+      } catch (error) {
+        console.error("Error updating last accessed time:", error);
+      }
+    }
     navigate(`/whiteboard/${className}/${projectName}/${teamName}`);
   };
 
   return (
-    <div className="team-container mt-2 pt-2">
-      {loading ? (
-        <p>Loading...</p>
-      ) : error ? (
-        <div className="alert alert-danger" role="alert">
-          {error}
-        </div>
-      ) : teamMembers.length > 0 ? (
-        <>
-          <h1 className="dashboard-title mb-4">
-            <i className="bi bi-person-workspace"></i> Team: {teamName}
-          </h1>
-          <h3 className="section-title mb-3">Project: {projectName}</h3>
+  <div className="team-page">
+    {loading ? (
+      <p>Loading...</p>
+    ) : error ? (
+      <div className="alert alert-danger" role="alert">
+        {error}
+      </div>
+    ) : (
+      <>
+        <h1 className="project-title">Project: {projectName}</h1>
+        <p><strong>Team: {teamName}</strong></p>
 
-          <div className="team-members mb-4">
-            <h5 className="mb-3">Team Members</h5>
-            {teamMembers.length > 0 ? (
-              <ul>
-                {teamMembers.map((member, idx) => (
-                  <li key={idx}>
-                    <strong>{member.name}</strong>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p>No members in this team.</p>
-            )}
-          </div>
+        <section className="team-members-card mb-4">
+          {teamMembers.length > 0 ? (
+            <ul className="member-list">
+              <li className="member-item">
+                <div className="member-row">
+                  <span className="member-title">Team Members</span>
+                  {/* Render the Last Accessed column only for teachers */}
+                  {userRole !== 'student' && <span className="last-access-header">Last Accessed</span>}
+                </div>
+              </li>
+              {teamMembers.map((member, idx) => (
+                <li key={idx} className="member-item">
+                  <div className="member-row">
+                    <span className="member-name">{member.name}</span>
+                    {/* Conditionally render last access time only if not a student */}
+                    {userRole !== 'student' && (
+                      <span className="last-access-time">
+                        {lastAccessTimes[member.email]
+                          ? new Date(lastAccessTimes[member.email]).toLocaleString()
+                          : '-'}
+                      </span>
+                    )}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p>No members in this team.</p>
+          )}
+        </section>
 
-          {/* Whiteboard Button */}
-          <div className="action-buttons mb-4">
-            <button
-              onClick={handleWhiteboardClick}
-              className="btn action-btn" 
-            >
-              <i className="bi bi-tv"></i> Open Whiteboard
-            </button>
-          </div>
+        <section className="action-buttons mb-4">
+          <button onClick={handleWhiteboardClick} className="btn action-btn">
+            <i className="bi bi-tv"></i> Open Whiteboard
+          </button>
+        </section>
 
-          <div className="action-buttons mb-4">
-            <button
-              type="button"
-              className="btn back-btn"
-              onClick={() => navigate(`/classroom/${className}/project/${projectName}`)}
-            >
-              <i className="bi bi-arrow-left me-2"></i> Back to Project
-            </button>
-          </div>
-        </>
-      ) : (
-        <p>No team data available.</p>
-      )}
-    </div>
-  );
+        <section className="action-buttons mb-4">
+          <button
+            type="button"
+            className="btn back-btn"
+            onClick={() => navigate(`/classroom/${className}/project/${projectName}`)}
+          >
+            <i className="bi bi-arrow-left me-2"></i> Back to Project
+          </button>
+        </section>
+      </>
+    )}
+  </div>
+);
+
 };
 
 export default Team;
