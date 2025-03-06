@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import "./Navbar.css";
+import Breadcrumbs from "../Breadcrumbs";
 
 const Navbar = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
 
-  const role = localStorage.getItem("role"); // Get role from localStorage
+  const role = localStorage.getItem("role");
   const homeRoute =
     role === "teacher"
       ? "/teachers-home"
@@ -15,18 +17,17 @@ const Navbar = () => {
       : "/";
 
   const handleProfileClick = () => {
-    setIsProfileOpen((prev) => !prev); // Toggle profile dropdown visibility
+    setIsProfileOpen(prev => !prev);
   };
 
   const handleLogout = () => {
     localStorage.removeItem("role");
-    navigate("/"); // Redirect to login page
+    navigate("/");
   };
 
-  // Close profile dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (e) => {
-      if (e.target.closest(".navbar") === null) {
+      if (!e.target.closest(".navbar")) {
         setIsProfileOpen(false);
       }
     };
@@ -36,34 +37,85 @@ const Navbar = () => {
 
   return (
     <div className="navbar">
-      <div className="navbar-left">
-        {/* Logo and links */}
-        <div className="navbar-title" onClick={() => navigate(homeRoute)}>
-          Creative Assistant
-        </div>
-        <div className="navbar-links">
-          <a onClick={() => navigate("/about")}>About</a>
-          <a onClick={() => navigate("/contact")}>Contact</a>
-        </div>
-      </div>
-      <div className="navbar-right">
-        {/* Dropdown for logout */}
-        <ul className="nav-item dropdown">
-          <li className="nav-link dropdown-toggle" onClick={handleProfileClick}>
-            <i className="bi bi-person" style={{ fontSize: "24px", color: "white" }}></i>
-          </li>
-          {/* Dropdown Menu */}
-          <ul className={`dropdown-menu ${isProfileOpen ? "show" : ""}`}>
-            <li>
-              <button
-                className="dropdown-item btn btn-dark btn-sm"
-                onClick={handleLogout}
+      <div className="navbar-container">
+        <div className="navbar-content">
+          {/* Left Section: Title */}
+          <div className="navbar-left">
+            <div className="navbar-title-container">
+              <div
+                className="navbar-title"
+                onClick={() => navigate(homeRoute)}
               >
-                <i className="bi bi-box-arrow-right me-2"></i> Logout
-              </button>
-            </li>
-          </ul>
-        </ul>
+                Creative Assistant
+              </div>
+            </div>
+          </div>
+
+          {/* Center Section: Divider and Breadcrumbs */}
+          <div className="navbar-center">
+            <div className="divider"></div>
+            <div className="navbar-breadcrumbs">
+              <Breadcrumbs />
+            </div>
+          </div>
+
+          {/* Right Section: Menu Icon Dropdown */}
+          <div className="navbar-right">
+            <ul className="nav-item dropdown">
+              <li
+                className="nav-link"
+                onClick={handleProfileClick}
+                style={{ paddingTop: "10px", cursor: "pointer" }}
+              >
+                <i
+                  className="bi bi-list"
+                  style={{ fontSize: "24px", color: "white" }}
+                ></i>
+              </li>
+              <ul className={`dropdown-menu ${isProfileOpen ? "show" : ""}`}>
+                <li>
+                  <a
+                    className="dropdown-item"
+                    onClick={() => {
+                      navigate("/about");
+                      setIsProfileOpen(false);
+                    }}
+                    style={{ cursor: "pointer" }}
+                  >
+                    About
+                  </a>
+                </li>
+                <li>
+                  <a
+                    className="dropdown-item"
+                    onClick={() => {
+                      navigate("/contact");
+                      setIsProfileOpen(false);
+                    }}
+                    style={{ cursor: "pointer" }}
+                  >
+                    Contact
+                  </a>
+                </li>
+                <li>
+                  <hr className="dropdown-divider" />
+                </li>
+                <li>
+                  <a
+                    className="dropdown-item"
+                    onClick={() => {
+                      handleLogout();
+                      setIsProfileOpen(false);
+                    }}
+                    style={{ cursor: "pointer" }}
+                  >
+                   <i className="bi bi-box-arrow-right me-2"></i> Logout
+                  </a>
+                </li>
+              </ul>
+            </ul>
+          </div>
+        </div>
       </div>
     </div>
   );
