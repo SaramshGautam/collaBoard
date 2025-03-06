@@ -2,8 +2,7 @@
   margin-top: 60px;
   position: relative;
   height: calc(100vh - 60px);
-  background-color: #b1b8ce; /* Light gray background */
-  padding: 20px; /* Adds some spacing */
+  background-color: #ffffff; /* Light gray background */
 }
 
 /* .comment-icon-container {
