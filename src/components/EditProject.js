@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 import { useFlashMessage } from '../FlashMessageContext';
 
 const EditProject = () => {
@@ -13,20 +15,14 @@ const EditProject = () => {
     dueDate: '',
   };
 
-  const formatDateForInput = (date) => {
-    if (!date) return '';
-    const d = new Date(date);
-    return d.toISOString().slice(0, 16);
-  };
-
   const [formData, setFormData] = useState({
     projectName: projectName || '',
     description: initialProjectDetails.description,
-    dueDate: formatDateForInput(initialProjectDetails.dueDate),
+    dueDate: initialProjectDetails.dueDate ? new Date(initialProjectDetails.dueDate) : new Date(),
     teamFile: null,
   });
 
-  const [showDeleteModal, setShowDeleteModal] = useState(false); // State for delete confirmation modal
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   const handleChange = (e) => {
     const { name, value, files } = e.target;
@@ -36,17 +32,24 @@ const EditProject = () => {
     }));
   };
 
+  const handleDateChange = (date) => {
+    setFormData((prevData) => ({
+      ...prevData,
+      dueDate: date,
+    }));
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
-  
+    
     const form = new FormData();
     form.append('project_name', formData.projectName);
     form.append('description', formData.description);
-    form.append('due_date', formData.dueDate);
+    form.append('due_date', formData.dueDate.toISOString());
     if (formData.teamFile) {
       form.append('team_file', formData.teamFile);
     }
-  
+
     fetch(`http://localhost:5000/api/classroom/${className}/project/${projectName}/edit`, {
       method: 'POST',
       body: form,
@@ -65,16 +68,13 @@ const EditProject = () => {
         addMessage('danger', 'An error occurred. Please try again.');
       });
   };
-  
 
-  // **Delete Project Function**
   const confirmDelete = async () => {
     try {
-      // Update the URL to point to the backend (localhost:5000)
       const response = await fetch(`http://localhost:5000/api/classroom/${className}/project/${projectName}/delete`, {
         method: 'DELETE',
       });
-  
+
       if (response.ok) {
         addMessage('success', `Project '${formData.projectName}' deleted successfully!`);
         navigate(`/classroom/${className}`);
@@ -86,25 +86,25 @@ const EditProject = () => {
       addMessage('danger', 'An error occurred while deleting the project.');
     }
   };
-  
+
   return (
     <div className="container form-container mt-4">
       <h1 className="form-title">Edit Project</h1>
 
       <form onSubmit={handleSubmit} encType="multipart/form-data">
-      <div className="mb-3">
-      <label htmlFor="projectName" className="form-label">Project Name</label>
-      <input
-        type="text"
-        id="projectName"
-        name="projectName"
-        className="form-control"
-        value={formData.projectName}
-        readOnly
-        title="Project name is not editable"
-        style={{ backgroundColor: "#e9ecef", cursor: "not-allowed" }}
-      />
-    </div>
+        <div className="mb-3">
+          <label htmlFor="projectName" className="form-label">Project Name</label>
+          <input
+            type="text"
+            id="projectName"
+            name="projectName"
+            className="form-control"
+            value={formData.projectName}
+            readOnly
+            title="Project name is not editable"
+            style={{ backgroundColor: "#e9ecef", cursor: "not-allowed" }}
+          />
+        </div>
 
         <div className="mb-3">
           <label htmlFor="description" className="form-label">Project Description</label>
@@ -119,15 +119,15 @@ const EditProject = () => {
           ></textarea>
         </div>
 
-        <div className="mb-3">
-          <label htmlFor="dueDate" className="form-label">Due Date</label>
-          <input
-            type="datetime-local"
-            id="dueDate"
-            name="dueDate"
+        {/* Due Date & Time Picker in the Same Line */}
+        <div className="mb-3 d-flex align-items-center">
+          <label htmlFor="dueDate" className="form-label me-3">Due Date & Time:</label>
+          <DatePicker
+            selected={formData.dueDate}
+            onChange={handleDateChange}
+            showTimeSelect
+            dateFormat="Pp"
             className="form-control"
-            value={formData.dueDate}
-            onChange={handleChange}
             required
           />
         </div>
@@ -145,7 +145,7 @@ const EditProject = () => {
 
         <div className="d-flex justify-content-start gap-3">
           <button type="submit" className="btn action-btn">
-            <i className="bi bi-save"></i> Update
+            <i className="bi bi-upload"></i> Update
           </button>
           <button
             type="button"
@@ -164,7 +164,6 @@ const EditProject = () => {
         </div>
       </form>
 
-      {/* Delete Confirmation Modal */}
       {showDeleteModal && (
         <div className="modal fade show d-block" tabIndex="-1" style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
           <div className="modal-dialog">
