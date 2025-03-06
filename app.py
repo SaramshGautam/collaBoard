@@ -816,6 +816,7 @@ def manage_team(class_name, project_name):
         "students": available_students,
         "teams": teams
     })
+
 @app.route('/save-teams', methods=['POST'])
 def save_teams():
     try:
@@ -934,7 +935,35 @@ def get_student_projects(email):
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-    
+
+@app.route('/api/teacher/<teacher_email>/team/<class_name>/<project_name>/<team_name>', methods=['GET'])
+def get_team_last_access(teacher_email, class_name, project_name, team_name):
+    try:
+        # Check if user is a teacher
+        user_ref = db.collection('users').document(teacher_email)
+        user_doc = user_ref.get()
+        
+        if not user_doc.exists or user_doc.to_dict().get('role') != 'teacher':
+            return jsonify({"error": "Access denied"}), 403
+        
+        team_ref = db.collection('classrooms').document(class_name).collection('Projects').document(project_name).collection('teams').document(team_name)
+        team_doc = team_ref.get()
+
+        if not team_doc.exists:
+            return jsonify({"error": "Team not found"}), 404
+        
+        team_data = team_doc.to_dict()
+        last_access_info = {}
+
+        for student_email, details in team_data.items():
+            if isinstance(details, dict) and 'lastAccessed' in details:
+                last_access_info[student_email] = details['lastAccessed']
+
+        return jsonify({"lastAccessTimes": last_access_info}), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 @app.route('/contact', methods=['POST'])
 def handle_contact():
     data = request.get_json()
