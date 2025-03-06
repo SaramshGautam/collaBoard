@@ -196,7 +196,7 @@ const EditClassroom = () => {
               <i className="bi bi-arrow-left"></i> Back to Home
             </button>
             <button type="button" className="btn delete-btn" onClick={() => setShowDeleteModal(true)}>
-              Delete Classroom
+            <i className="bi bi-trash"></i> Delete Classroom
             </button>
           </div>
         </form>
