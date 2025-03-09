@@ -1,47 +1,153 @@
-/* .navbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10px 20px;
-  background-color: #14213d;
-} */
+/* Navbar Container */
+.navbar-container {
+  width: 100%;
+}
 
 .navbar {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
-  height: 60px; /* Adjust height as needed */
+  background-color: #343a40; /* dark, sleek background */
+  color: #fff;
+  z-index: 1000;
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  padding: 0 12px;
+}
+
+/* Main content: three sections aligned horizontally */
+.navbar-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 50px; /* adjust height as needed */
+}
+
+/* Left Section: Title */
+.navbar-left {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  background-color: #14213d; /* Navbar background color */
-  padding: 0 20px;
-  color: white;
-  z-index: 1000; /* Ensure navbar stays on top */
+}
+
+.navbar-title-container {
+  margin-right: 20px; /* padding between title and center section */
 }
 
 .navbar-title {
-  font-size: 24px;
-  color: white;
+  font-size: 18px;
   font-weight: bold;
+  cursor: pointer;
 }
 
-.navbar-links a {
-  margin-left: 15px;
+/* Center Section: Divider and Breadcrumbs */
+.navbar-center {
+  display: flex;
+  align-items: center;
+  flex: 1;
+}
+
+.divider {
+  width: 1px;
+  height: 30px;
+  background-color: #fff;
+  margin: 0 15px; /* padding between divider and breadcrumbs */
+}
+
+.navbar-breadcrumbs {
+  display: flex;
+  align-items: center;
+  margin-top: 10px; /* Adjust as needed */
+  padding-top: 5px; /* Optional: fine-tune spacing */
+}
+
+/* Breadcrumb styling */
+.navbar-breadcrumbs .breadcrumb a {
   color: white;
   text-decoration: none;
-  font-size: 16px;
+  margin-right: 5px;
+  margin-top: 5px;
 }
 
-.navbar-profile {
+.navbar-breadcrumbs .breadcrumb a:hover {
+  text-decoration: underline;
+}
+
+/* Right Section: Profile Icon */
+.navbar-right {
+  display: flex;
+  align-items: center;
+}
+
+.nav-item.dropdown .nav-link.dropdown-toggle {
   cursor: pointer;
-  margin-left: auto;
+  display: flex;
+  align-items: center;
+}
+/* Logo Dropdown */
+.logo-dropdown {
+  position: absolute;
+  top: 50px;
+  left: 0;
+  background: white;
+  color: black;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 5px 0;
+  z-index: 1100;
 }
 
-.profile-icon {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
+.logo-dropdown a {
+  display: block;
+  padding: 5px 15px;
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+}
+
+.logo-dropdown a:hover {
+  background-color: #f0f0f0;
+}
+/* Dropdown menu (profile) */
+.dropdown-menu {
+  display: none;
+  position: absolute;
+  top: 40px;
+  right: 0;
+  background-color: #495057;
+  border-radius: 5px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+  z-index: 1100;
+}
+
+.dropdown-menu .dropdown-item {
+  color: white;
+  font-size: 0.9rem;
+  padding: 5px 10px;
+  display: flex;
+  align-items: center;
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  font-weight: 600;
+}
+
+.dropdown-menu .dropdown-item i {
+  font-size: 18px;
+}
+
+.dropdown-menu .dropdown-item:hover {
+  background-color: rgb(52, 58, 64);
+}
+
+.dropdown-menu.show {
+  display: block;
+}
+
+/* Adjust body padding to match the new navbar height */
+body {
+  padding-top: 60px; /* Adjust based on your new navbar height */
+}
+.breadcrumb-separator {
   color: white;
 }

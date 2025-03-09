@@ -2,6 +2,7 @@
   margin-top: 60px;
   position: relative;
   height: calc(100vh - 60px);
+  background-color: #ffffff; /* Light gray background */
 }
 
 /* .comment-icon-container {
@@ -20,6 +21,34 @@
   font-size: 10px;
   font-weight: bold;
 } */
+
+/* Adjusted styles for smaller headings */
+.dashboard-title {
+  font-size: 1.5rem; /* Smaller size for "Student's Dashboard" */
+  font-weight: 600;
+  color: #0d0d0d;
+  margin-bottom: 10px;
+}
+
+.assigned-classrooms-title {
+  font-size: 1.25rem; /* Smaller size for "Assigned Classrooms" */
+  font-weight: 500;
+  color: #070707;
+  margin-bottom: 8px;
+}
+
+/* Adjust Classroom heading size */
+.classroom-heading {
+  font-size: 1.5rem; /* Adjust size as needed */
+  font-weight: bold;
+}
+
+/* Adjust Project heading size */
+.project-heading {
+  font-size: 1.25rem; /* Adjust size as needed */
+  font-weight: 600;
+}
+
 
 .commentsTitle {
   padding: 0px;
@@ -308,33 +337,4 @@
 .tlui-style-panel {
   position: relative;
   top: 72%;
-}
-
-/* App.css */
-.submenu {
-  position: relative;
-  display: none; /* Hidden by default */
-  background-color: #aaa;
-  border: 1px solid #f4ee9b;
-  padding: 0px;
-  z-index: 10;
-}
-
-.menu-item-react:hover .submenu {
-  display: block; /* Show on hover */
-}
-
-.submenu-item {
-  display: flex;
-  align-items: center;
-  padding: 5px;
-  cursor: pointer;
-}
-
-.submenu-item:hover {
-  background-color: #e0f7fa;
-}
-
-.submenu-item TldrawUiMenuItem {
-  margin-right: 5px;
 }
